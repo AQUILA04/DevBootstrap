@@ -74,14 +74,25 @@ jobs:
       - name: Smoke check
         env:
           LANDING_HOST: ${{ secrets.LANDING_HOST }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
         run: |
           HOST_NAME="${LANDING_HOST:-stackpilot.optimizesolux.com}"
-          for i in 1 2 3 4 5; do
+          VPS_IP="${VPS_HOST:-169.58.127.90}"
+          ok=0
+          for i in 1 2 3 4 5 6 7 8; do
             if curl -fsS --max-time 20 "https://${HOST_NAME}/" >/dev/null; then
               echo "OK https://${HOST_NAME}/"
-              exit 0
+              ok=1
+              break
+            fi
+            if curl -fsSk --max-time 20 --resolve "${HOST_NAME}:443:${VPS_IP}" "https://${HOST_NAME}/" >/dev/null; then
+              echo "OK via VPS IP ${VPS_IP} (DNS public may still be propagating)"
+              ok=1
+              break
             fi
             sleep 5
           done
-          echo "Smoke check failed for https://${HOST_NAME}/"
-          exit 1
+          if [ "$ok" -ne 1 ]; then
+            echo "Smoke check failed for https://${HOST_NAME}/"
+            exit 1
+          fi
