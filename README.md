@@ -1,41 +1,31 @@
 # StackPilot
 
-Bootstrapper Windows pour installer rapidement ton pack d'outils de developpement via **winget** — toujours la derniere version disponible.
+Application Windows pour installer rapidement ton pack d'outils de developpement sur un nouveau poste.
+Double-clic, UAC, checklist — sans dependre de l'execution des scripts PowerShell.
 
 ## Prerequisites
 
 - Windows 10/11 avec [winget](https://learn.microsoft.com/windows/package-manager/winget/) (`App Installer`)
 - Connexion Internet
-- PowerShell **en Administrateur** recommande (requis pour WSL et Docker Desktop)
+- Compte administrateur (UAC) pour WSL, Docker Desktop, etc.
 
-## Quick start (simple - GUI)
+## Utilisation (recommandee)
 
-Double-clic sur `StackPilot.cmd` (ou `DevBootstrap.cmd`), ou:
+1. Telecharge le dernier ZIP :  
+   https://github.com/AQUILA04/DevBootstrap/releases/latest/download/StackPilot.zip
+2. Extraits le dossier (garde `StackPilot.exe` et `catalog.json` ensemble)
+3. Double-clic sur `StackPilot.exe` (UAC Windows)
+4. Coche les outils, puis **Installer**
 
-```powershell
-cd ~\Projects\dev-bootstrap
-Set-ExecutionPolicy -Scope Process Bypass
-.\gui.ps1
+## Build (developpeurs)
+
+Necessite [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+
+```bat
+build.cmd
 ```
 
-Coche les outils, puis **Installer**.
-
-## Quick start (CLI)
-
-```powershell
-cd ~\Projects\dev-bootstrap
-Set-ExecutionPolicy -Scope Process Bypass
-.\bootstrap.ps1
-```
-
-Menu interactif :
-
-- `all` - tout installer
-- `defaults` / `d` - selection par defaut (`*` dans le catalogue)
-- `1,3,5-8` - selection multiple
-- `q` - quitter
-
-## Generer un EXE (pour partage / nouveau PC)
+ou :
 
 ```powershell
 .\build.ps1
@@ -43,137 +33,50 @@ Menu interactif :
 
 Resultat :
 
-- `dist\StackPilot\StackPilot.exe` - double-clic (UAC admin)
-- `dist\StackPilot\bootstrap.ps1` + `catalog.json` + `branding.ps1` (a garder avec l'EXE)
-- `dist\StackPilot.zip` - archive a copier sur une cle USB / OneDrive
+- `dist\StackPilot\StackPilot.exe` (appli WinForms native, self-contained)
+- `dist\StackPilot\catalog.json`
+- `dist\StackPilot\LIRE-MOI.txt`
+- `dist\StackPilot.zip`
 
-### EXE vs MSI
+Signature Authenticode optionnelle en CI si secrets `CODE_SIGN_PFX_BASE64` + `CODE_SIGN_PASSWORD`.
 
-| Format | Faisable | Verdict |
-|---|---|---|
-| **EXE** (ps2exe + GUI) | Oui | **Recommande** - double-clic, UAC, checklist |
-| **MSI** (WiX / Advanced Installer) | Oui mais plus lourd | Utile en entreprise (GPO/Intune), pas necessaire pour usage perso |
+## CLI optionnelle (machines non verrouillees)
 
-L'EXE n'embarque pas les logiciels eux-memes : il orchestre **winget** pour telecharger la derniere version a l'installation.
+Les scripts `bootstrap.ps1` / `gui.ps1` restent disponibles pour le developpement, mais **ne sont plus** le chemin principal ni inclus dans le ZIP utilisateur.
+
+```powershell
+.\bootstrap.ps1 -List
+.\bootstrap.ps1 -Defaults
+```
 
 ## CI / CD (GitHub Actions)
 
 Repo: `https://github.com/AQUILA04/DevBootstrap`
 
-A chaque push (ou PR) qui touche le catalogue / scripts / workflow, Actions :
+Sur push / PR / tag `v*` :
 
-1. Build `StackPilot.exe` sur `windows-latest`
-2. Publie les artefacts `StackPilot` et `StackPilot-zip`
+1. Build natif .NET 8 sur `windows-latest`
+2. Artefacts `StackPilot` + `StackPilot-zip`
+3. Tag `v*` → GitHub Release avec le zip
 
-Un tag `v*` (ex. `v1.0.0`) declenche aussi une **GitHub Release** avec le zip.
-
-```powershell
-git tag v1.0.0
-git push origin v1.0.0
+```bat
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
 ## Site web (landing)
 
-Dossier `landing-page/` — presentation produit, telechargement, contribution.
+Dossier `landing-page/` — https://stackpilot.optimizesolux.com
 
-Preview local:
-
-```powershell
-cd landing-page
-npx --yes serve .
-```
-
-Deploiements:
-
-| Cible | Workflow | URL |
-|---|---|---|
-| Contabo + Traefik | `deploy-landing-page.yml` | https://stackpilot.optimizesolux.com |
-| GitHub Pages | `pages.yml` | https://aquila04.github.io/DevBootstrap/ |
-
-Contabo: secrets `VPS_HOST`, `VPS_USER`, `SSH_PRIVATE_KEY` (+ DNS A `stackpilot` → IP VPS, grey cloud).  
-Pages: Settings → Pages → Source **GitHub Actions**.
-
-Ne deploie Contabo qu'apres review locale (voir `landing-page/README.md`).
-
-## Commandes utiles
-
-```powershell
-# Voir le catalogue
-.\bootstrap.ps1 -List
-
-# Tout installer
-.\bootstrap.ps1 -All
-
-# Uniquement la selection par defaut
-.\bootstrap.ps1 -Defaults
-
-# Par cles
-.\bootstrap.ps1 -Keys git,node,docker,cursor
-
-# Par tags
-.\bootstrap.ps1 -Tags java,ide
-
-# Simulation (rien n'est installe)
-.\bootstrap.ps1 -WhatIf -All
-```
-
-## Catalogue actuel
-
-| Cle | Outil | ID winget |
-|---|---|---|
-| `wsl` | Windows Subsystem for Linux | `Microsoft.WSL` |
-| `git` | Git | `Git.Git` |
-| `chrome` | Google Chrome | `Google.Chrome` |
-| `arc` | Arc Browser | `TheBrowserCompany.Arc` |
-| `temurin17` | Temurin JDK 17 | `EclipseAdoptium.Temurin.17.JDK` |
-| `temurin21` | Temurin JDK 21 | `EclipseAdoptium.Temurin.21.JDK` |
-| `temurin25` | Temurin JDK 25 | `EclipseAdoptium.Temurin.25.JDK` |
-| `intellij-ultimate` | IntelliJ IDEA Ultimate | `JetBrains.IntelliJIDEA.Ultimate` |
-| `intellij-community` | IntelliJ IDEA Community | `JetBrains.IntelliJIDEA.Community` |
-| `docker` | Docker Desktop | `Docker.DockerDesktop` |
-| `cursor` | Cursor | `Anysphere.Cursor` |
-| `antigravity-ide` | Antigravity IDE | `Google.AntigravityIDE` |
-| `antigravity` | Antigravity Agent | `Google.Antigravity` |
-| `kiro` | Kiro IDE | `Amazon.Kiro` |
-| `dbeaver` | DBeaver Community | `DBeaver.DBeaver.Community` |
-| `pgadmin` | pgAdmin 4 | `PostgreSQL.pgAdmin` |
-| `postman` | Postman | `Postman.Postman` |
-| `node` | Node.js LTS | `OpenJS.NodeJS.LTS` |
-| `python` | Python 3.13 | `Python.Python.3.13` |
-| `vscode` | VS Code | `Microsoft.VisualStudioCode` |
-| `mobaxterm` | MobaXterm | `Mobatek.MobaXterm` |
-
-## Notes importantes
-
-- **WSL** est detecte nativement (`wsl --status` / composants Windows). S'il manque, le script active `Microsoft-Windows-Subsystem-Linux` + `VirtualMachinePlatform`, installe `Microsoft.WSL`, puis force WSL2. Un **redemarrage** peut etre necessaire avant Docker Desktop.
-- **IntelliJ Ultimate** est dans la selection par defaut (licence requise). Community est disponible mais desactivee par defaut.
-- **Antigravity IDE** est installe avant **Antigravity Agent**. Les deux produits ont deja eu des conflits de repertoire d'installation ; si un seul des deux doit tourner, desactive l'autre dans le menu.
-- Un rapport JSON `install-report-*.json` est ecrit apres chaque run.
+| Cible | Workflow |
+|---|---|
+| Contabo + Traefik | `deploy-landing-page.yml` |
+| GitHub Pages | `pages.yml` |
 
 ## Ajouter un outil
 
-Edite `catalog.json` :
-
-```json
-{
-  "key": "mon-outil",
-  "name": "Mon Outil",
-  "id": "Publisher.Package",
-  "source": "winget",
-  "tags": ["custom"],
-  "default": true
-}
-```
-
-Trouve l'ID avec :
+Edite `catalog.json` (voir [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ```powershell
 winget search "NomDuLogiciel"
 ```
-
-## Prochaines evolutions possibles
-
-- Profils (`frontend`, `backend`, `fullstack`)
-- Post-hooks (extensions Cursor/VS Code, config Git)
-- Fallback Scoop pour machines sans droits admin
-- Package MSI (WiX) pour deploiement Intune / GPO

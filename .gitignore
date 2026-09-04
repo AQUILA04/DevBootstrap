@@ -1,7 +1,9 @@
 dist/
 *.exe
+!src/**/*.exe
 install-report-*.json
-
-
 *-contabo-secrets.md
-
+**/bin/
+**/obj/
+.vs/
+*.user
