@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "packages": [
+    {
+      "key": "wsl",
+      "name": "Windows Subsystem for Linux",
+      "id": "Microsoft.WSL",
+      "source": "winget",
+      "detect": "wsl",
+      "installer": "wsl",
+      "tags": ["base", "containers", "wsl"],
+      "default": true,
+      "requiresAdmin": true,
+      "notes": "Active les composants Windows + installe WSL2. Un redemarrage peut etre requis avant Docker Desktop."
+    },
+    {
+      "key": "git",
+      "name": "Git",
+      "id": "Git.Git",
+      "source": "winget",
+      "tags": ["base", "vcs"],
+      "default": true
+    },
+    {
+      "key": "chrome",
+      "name": "Google Chrome",
+      "id": "Google.Chrome",
+      "source": "winget",
+      "tags": ["base", "browser"],
+      "default": true
+    },
+    {
+      "key": "arc",
+      "name": "Arc Browser",
+      "id": "TheBrowserCompany.Arc",
+      "source": "winget",
+      "tags": ["browser"],
+      "default": true
+    },
+    {
+      "key": "temurin17",
+      "name": "Eclipse Temurin JDK 17 (LTS)",
+      "id": "EclipseAdoptium.Temurin.17.JDK",
+      "source": "winget",
+      "tags": ["java", "jdk"],
+      "default": true
+    },
+    {
+      "key": "temurin21",
+      "name": "Eclipse Temurin JDK 21 (LTS)",
+      "id": "EclipseAdoptium.Temurin.21.JDK",
+      "source": "winget",
+      "tags": ["java", "jdk"],
+      "default": true
+    },
+    {
+      "key": "temurin25",
+      "name": "Eclipse Temurin JDK 25 (LTS)",
+      "id": "EclipseAdoptium.Temurin.25.JDK",
+      "source": "winget",
+      "tags": ["java", "jdk"],
+      "default": true
+    },
+    {
+      "key": "intellij-ultimate",
+      "name": "IntelliJ IDEA Ultimate",
+      "id": "JetBrains.IntelliJIDEA.Ultimate",
+      "source": "winget",
+      "tags": ["ide", "java"],
+      "default": true,
+      "notes": "Licence JetBrains requise pour l'activation."
+    },
+    {
+      "key": "intellij-community",
+      "name": "IntelliJ IDEA Community",
+      "id": "JetBrains.IntelliJIDEA.Community",
+      "source": "winget",
+      "tags": ["ide", "java"],
+      "default": false,
+      "notes": "Alternative gratuite a Ultimate."
+    },
+    {
+      "key": "docker",
+      "name": "Docker Desktop",
+      "id": "Docker.DockerDesktop",
+      "source": "winget",
+      "tags": ["containers", "base"],
+      "default": true,
+      "requiresAdmin": true,
+      "notes": "Prefere WSL2. Installe WSL avant si possible (inclus dans -Defaults)."
+    },
+    {
+      "key": "cursor",
+      "name": "Cursor",
+      "id": "Anysphere.Cursor",
+      "source": "winget",
+      "tags": ["ide", "ai"],
+      "default": true
+    },
+    {
+      "key": "antigravity-ide",
+      "name": "Antigravity IDE",
+      "id": "Google.AntigravityIDE",
+      "source": "winget",
+      "tags": ["ide", "ai"],
+      "default": true,
+      "notes": "Installer avant Antigravity Agent. Les deux peuvent entrer en conflit s'ils partagent le meme dossier."
+    },
+    {
+      "key": "antigravity",
+      "name": "Antigravity Agent",
+      "id": "Google.Antigravity",
+      "source": "winget",
+      "tags": ["ai"],
+      "default": true,
+      "notes": "Installer apres Antigravity IDE. Attention au conflit de repertoire d'installation."
+    },
+    {
+      "key": "kiro",
+      "name": "Kiro IDE",
+      "id": "Amazon.Kiro",
+      "source": "winget",
+      "tags": ["ide", "ai"],
+      "default": true
+    },
+    {
+      "key": "dbeaver",
+      "name": "DBeaver Community",
+      "id": "DBeaver.DBeaver.Community",
+      "source": "winget",
+      "tags": ["database"],
+      "default": true
+    },
+    {
+      "key": "pgadmin",
+      "name": "pgAdmin 4",
+      "id": "PostgreSQL.pgAdmin",
+      "source": "winget",
+      "tags": ["database", "postgres"],
+      "default": true
+    },
+    {
+      "key": "postman",
+      "name": "Postman",
+      "id": "Postman.Postman",
+      "source": "winget",
+      "tags": ["api"],
+      "default": true
+    },
+    {
+      "key": "node",
+      "name": "Node.js LTS",
+      "id": "OpenJS.NodeJS.LTS",
+      "source": "winget",
+      "tags": ["runtime", "frontend", "backend"],
+      "default": true
+    },
+    {
+      "key": "python",
+      "name": "Python 3.13",
+      "id": "Python.Python.3.13",
+      "source": "winget",
+      "tags": ["runtime", "python"],
+      "default": true
+    },
+    {
+      "key": "vscode",
+      "name": "Visual Studio Code",
+      "id": "Microsoft.VisualStudioCode",
+      "source": "winget",
+      "tags": ["ide", "editor"],
+      "default": true
+    },
+    {
+      "key": "mobaxterm",
+      "name": "MobaXterm",
+      "id": "Mobatek.MobaXterm",
+      "source": "winget",
+      "tags": ["terminal", "ssh"],
+      "default": true
+    }
+  ]
+}

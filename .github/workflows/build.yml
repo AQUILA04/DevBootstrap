@@ -1,0 +1,62 @@
+name: Build StackPilot
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build EXE
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build StackPilot
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy -Scope Process Bypass
+          .\build.ps1
+
+      - name: Upload StackPilot folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: StackPilot
+          path: dist/StackPilot/
+          if-no-files-found: error
+
+      - name: Upload StackPilot zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: StackPilot-zip
+          path: dist/StackPilot.zip
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download zip artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: StackPilot-zip
+          path: release-assets
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/StackPilot.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
