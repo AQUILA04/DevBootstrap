@@ -2,3 +2,6 @@ dist/
 *.exe
 install-report-*.json
 
+
+*-contabo-secrets.md
+

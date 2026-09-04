@@ -1,9 +1,6 @@
 # StackPilot
 
-**Nom commercial :** StackPilot  
-**Nom technique :** `dev-bootstrap` (dossier, scripts, repo)
-
-Bootstrapper Windows pour installer rapidement ton pack d'outils de developpement (equivalent moderne d'un pack post-install type Orion), via **winget** — toujours la derniere version disponible.
+Bootstrapper Windows pour installer rapidement ton pack d'outils de developpement via **winget** — toujours la derniere version disponible.
 
 ## Prerequisites
 
@@ -74,6 +71,29 @@ Un tag `v*` (ex. `v1.0.0`) declenche aussi une **GitHub Release** avec le zip.
 git tag v1.0.0
 git push origin v1.0.0
 ```
+
+## Site web (landing)
+
+Dossier `landing-page/` — presentation produit, telechargement, contribution.
+
+Preview local:
+
+```powershell
+cd landing-page
+npx --yes serve .
+```
+
+Deploiements:
+
+| Cible | Workflow | URL |
+|---|---|---|
+| Contabo + Traefik | `deploy-landing-page.yml` | https://stackpilot.optimizesolux.com |
+| GitHub Pages | `pages.yml` | https://aquila04.github.io/DevBootstrap/ |
+
+Contabo: secrets `VPS_HOST`, `VPS_USER`, `SSH_PRIVATE_KEY` (+ DNS A `stackpilot` → IP VPS, grey cloud).  
+Pages: Settings → Pages → Source **GitHub Actions**.
+
+Ne deploie Contabo qu'apres review locale (voir `landing-page/README.md`).
 
 ## Commandes utiles
 

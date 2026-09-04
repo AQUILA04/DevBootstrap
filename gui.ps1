@@ -4,8 +4,7 @@
   Interface graphique StackPilot (selection + installation).
 
 .DESCRIPTION
-  Produit commercial: StackPilot
-  Projet technique:   dev-bootstrap
+  Interface graphique StackPilot.
 
   Double-clic via dist\StackPilot\StackPilot.exe, ou:
     powershell -ExecutionPolicy Bypass -File .\gui.ps1

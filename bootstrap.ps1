@@ -1,7 +1,7 @@
 #requires -Version 5.1
 <#
 .SYNOPSIS
-  Bootstrapper de poste de developpement (style Pack Orion) via winget.
+  Bootstrapper de poste de developpement via winget.
 
 .EXAMPLE
   .\bootstrap.ps1
@@ -93,7 +93,7 @@ function Select-PackagesInteractive {
 
     Write-Host ""
     Write-Host "=== StackPilot ===" -ForegroundColor Magenta
-    Write-Host "Selectionne les outils a installer. (projet technique: dev-bootstrap)" -ForegroundColor Gray
+    Write-Host "Selectionne les outils a installer." -ForegroundColor Gray
     Write-Host "  all            -> tout installer"
     Write-Host "  defaults / d   -> selection par defaut (*)"
     Write-Host "  1,3,5-8        -> selection multiple"

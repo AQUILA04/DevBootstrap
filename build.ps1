@@ -104,7 +104,6 @@ Copy-Item -LiteralPath (Join-Path $root "branding.ps1") -Destination (Join-Path 
 $readmeUser = @"
 StackPilot
 ==========
-(nom technique du projet: dev-bootstrap)
 
 1. Clic droit sur $OutputName.exe -> Executer en tant qu'administrateur
    (ou double-clic: Windows demandera l'elevation UAC)
