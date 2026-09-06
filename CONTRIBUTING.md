@@ -36,7 +36,7 @@ winget show -e --id Publisher.Package
 }
 ```
 
-4. If the tool belongs to a role pack, add its `key` to the relevant entries in `profiles` (`frontend`, `backend`, `fullstack`, `devops`, `ux-ui-web-designer`, and/or `base`).
+4. If the tool belongs to a role pack, add its `key` to the relevant entries in `profiles` (`frontend`, `backend`, `fullstack`, `devops`, `mobile`, `ux-ui-web-designer`, and/or `base`).
 5. Keep `"default": true` only for tools that belong to the **Base** profile (they must stay in sync).
 6. Open a Pull Request with:
    - why the tool belongs in a shared / role pack
@@ -65,13 +65,15 @@ Rules:
 - Set `"default": false` unless it is in the Base profile
 - Mark `"requiresAdmin": true` when elevation is required
 - Keep notes short and ASCII-friendly
-- Tag packages with role tags when useful (`frontend`, `backend`, `devops`, `ux`, …)
+- Tag packages with role tags when useful (`frontend`, `backend`, `devops`, `mobile`, `ux`, …)
+- Flutter uses `"installer": "flutter"` (custom download) because the SDK is not reliably published on winget.
 
 ## Local check
 
 ```powershell
 .\bootstrap.ps1 -List
 .\bootstrap.ps1 -WhatIf -Profile frontend
+.\bootstrap.ps1 -WhatIf -Profile mobile
 .\bootstrap.ps1 -WhatIf -Keys my-tool
 ```
 

@@ -139,6 +139,38 @@
       ]
     },
     {
+      "key": "mobile",
+      "name": "Mobile",
+      "description": "Android / Flutter / React Native: JDK, Android Studio, Flutter, Dart, ADB, scrcpy.",
+      "packages": [
+        "wsl",
+        "git",
+        "chrome",
+        "vscode",
+        "cursor",
+        "windows-terminal",
+        "github-cli",
+        "powertoys",
+        "powershell7",
+        "antigravity-ide",
+        "antigravity",
+        "kiro",
+        "temurin17",
+        "android-studio",
+        "android-sdk-platform-tools",
+        "dart-sdk",
+        "flutter",
+        "node",
+        "fnm",
+        "watchman",
+        "scrcpy",
+        "firebase-cli",
+        "postman",
+        "figma",
+        "docker"
+      ]
+    },
+    {
       "key": "ux-ui-web-designer",
       "name": "UX/UI Web Designer",
       "description": "Design produit web: Figma, graphisme FOSS, captures, Notion.",
@@ -215,8 +247,9 @@
       "name": "Eclipse Temurin JDK 17 (LTS)",
       "id": "EclipseAdoptium.Temurin.17.JDK",
       "source": "winget",
-      "tags": ["java", "jdk", "backend"],
-      "default": false
+      "tags": ["java", "jdk", "backend", "mobile"],
+      "default": false,
+      "notes": "JDK recommande pour Android Gradle Plugin / Android Studio."
     },
     {
       "key": "temurin21",
@@ -266,7 +299,7 @@
       "name": "Docker Desktop",
       "id": "Docker.DockerDesktop",
       "source": "winget",
-      "tags": ["containers", "base", "backend", "devops"],
+      "tags": ["containers", "base", "backend", "devops", "mobile"],
       "default": false,
       "requiresAdmin": true,
       "notes": "Prefere WSL2. Installe WSL avant si possible."
@@ -345,7 +378,7 @@
       "name": "Postman",
       "id": "Postman.Postman",
       "source": "winget",
-      "tags": ["api", "frontend", "backend"],
+      "tags": ["api", "frontend", "backend", "mobile"],
       "default": false
     },
     {
@@ -353,7 +386,7 @@
       "name": "Node.js LTS",
       "id": "OpenJS.NodeJS.LTS",
       "source": "winget",
-      "tags": ["runtime", "frontend", "backend"],
+      "tags": ["runtime", "frontend", "backend", "mobile"],
       "default": false
     },
     {
@@ -361,7 +394,7 @@
       "name": "fnm (Fast Node Manager)",
       "id": "Schniz.fnm",
       "source": "winget",
-      "tags": ["runtime", "frontend", "node"],
+      "tags": ["runtime", "frontend", "node", "mobile"],
       "default": false,
       "notes": "Gestionnaire de versions Node. Configurer le shell apres installation."
     },
@@ -482,7 +515,7 @@
       "name": "Figma",
       "id": "Figma.Figma",
       "source": "winget",
-      "tags": ["design", "ux", "frontend"],
+      "tags": ["design", "ux", "frontend", "mobile"],
       "default": false
     },
     {
@@ -523,6 +556,71 @@
       "id": "Notion.Notion",
       "source": "winget",
       "tags": ["productivity", "ux"],
+      "default": false
+    },
+    {
+      "key": "android-studio",
+      "name": "Android Studio",
+      "id": "Google.AndroidStudio",
+      "source": "winget",
+      "tags": ["ide", "mobile", "android"],
+      "default": false,
+      "requiresAdmin": true,
+      "notes": "Necessite un JDK (Temurin 17 inclus dans le profil Mobile). Configurer le SDK Android au premier lancement."
+    },
+    {
+      "key": "android-sdk-platform-tools",
+      "name": "Android SDK Platform-Tools",
+      "id": "Google.PlatformTools",
+      "source": "winget",
+      "tags": ["mobile", "android", "cli"],
+      "default": false,
+      "notes": "adb et fastboot. Peut necessiter un PATH / Developer Mode."
+    },
+    {
+      "key": "dart-sdk",
+      "name": "Dart SDK",
+      "id": "Google.DartSDK",
+      "source": "winget",
+      "tags": ["mobile", "flutter", "runtime"],
+      "default": false,
+      "notes": "SDK Dart autonome (utile hors bundle Flutter)."
+    },
+    {
+      "key": "flutter",
+      "name": "Flutter SDK",
+      "id": "Flutter.SDK",
+      "source": "custom",
+      "detect": "flutter",
+      "installer": "flutter",
+      "tags": ["mobile", "flutter", "sdk"],
+      "default": false,
+      "notes": "Telecharge le canal stable officiel (pas sur winget). Puis: flutter doctor."
+    },
+    {
+      "key": "scrcpy",
+      "name": "scrcpy",
+      "id": "Genymobile.scrcpy",
+      "source": "winget",
+      "tags": ["mobile", "android", "debug"],
+      "default": false,
+      "notes": "Miroir / controle d'un appareil Android en USB ou TCP."
+    },
+    {
+      "key": "watchman",
+      "name": "Watchman",
+      "id": "facebook.watchman",
+      "source": "winget",
+      "tags": ["mobile", "react-native", "cli"],
+      "default": false,
+      "notes": "File watcher Meta, utile pour React Native. Dependance VC++ Redist possible."
+    },
+    {
+      "key": "firebase-cli",
+      "name": "Firebase CLI",
+      "id": "Google.FirebaseCLI",
+      "source": "winget",
+      "tags": ["mobile", "cloud", "cli"],
       "default": false
     }
   ]

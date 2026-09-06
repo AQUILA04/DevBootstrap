@@ -15,7 +15,7 @@ Double-clic, UAC, checklist — sans dependre de l'execution des scripts PowerSh
    https://github.com/AQUILA04/DevBootstrap/releases/latest/download/StackPilot.zip
 2. Extraits le dossier (garde `StackPilot.exe` et `catalog.json` ensemble)
 3. Double-clic sur `StackPilot.exe` (UAC Windows)
-4. Choisis un **profil** (Base, Frontend, Backend, Fullstack, DevOps, UX/UI Web Designer), ajuste la checklist, puis **Installer**
+4. Choisis un **profil** (Base, Frontend, Backend, Fullstack, DevOps, Mobile, UX/UI Web Designer), ajuste la checklist, puis **Installer**
 
 ## Profils (catalogue v2)
 
@@ -28,9 +28,12 @@ Le fichier `catalog.json` (`version: 2`) definit des profils metier : chaque pro
 | Backend | `backend` | Base + JDK 21, IntelliJ, Docker, PostgreSQL, pgAdmin, DBeaver, SQL Developer, Postman, Python, Maven |
 | Fullstack | `fullstack` | Union Frontend + Backend |
 | DevOps | `devops` | Base + Docker, kubectl, Helm, Terraform, AWS/Azure CLI, MobaXterm, Oh My Posh, Python |
+| Mobile | `mobile` | Base + JDK 17, Android Studio, Platform-Tools, Flutter SDK, Dart, Node/fnm, Watchman, scrcpy, Firebase CLI, Postman, Figma, Docker |
 | UX/UI Web Designer | `ux-ui-web-designer` | Base + Figma, Inkscape, GIMP, Blender, ShareX, Notion, navigateurs |
 
 PostgreSQL 17 (`postgresql`) et Oracle SQL Developer (`sqldeveloper`) sont inclus dans Backend / Fullstack.
+
+Le profil **Mobile** installe Flutter via telechargement officiel (pas winget) : `flutter doctor` apres reboot/nouveau terminal.
 
 ## Build (developpeurs)
 
@@ -63,6 +66,7 @@ Les scripts `bootstrap.ps1` / `gui.ps1` restent disponibles pour le developpemen
 .\bootstrap.ps1 -List
 .\bootstrap.ps1 -Defaults
 .\bootstrap.ps1 -Profile frontend
+.\bootstrap.ps1 -Profile mobile
 .\bootstrap.ps1 -Profile devops -WhatIf
 ```
 

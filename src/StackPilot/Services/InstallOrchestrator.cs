@@ -6,11 +6,13 @@ public sealed class InstallOrchestrator
 {
     private readonly WingetClient _winget;
     private readonly WslInstaller _wsl;
+    private readonly FlutterInstaller _flutter;
 
     public InstallOrchestrator()
     {
         _winget = new WingetClient();
         _wsl = new WslInstaller(_winget);
+        _flutter = new FlutterInstaller();
     }
 
     public static IReadOnlyList<PackageEntry> OrderForInstall(IEnumerable<PackageEntry> selected)
@@ -19,10 +21,15 @@ public sealed class InstallOrchestrator
             .OrderBy(p => p.Key switch
             {
                 "wsl" => 0,
-                "docker" => 1,
-                "antigravity-ide" => 2,
-                "antigravity" => 3,
-                _ => 4
+                "temurin17" => 1,
+                "temurin21" => 1,
+                "docker" => 2,
+                "android-studio" => 3,
+                "antigravity-ide" => 4,
+                "antigravity" => 5,
+                "dart-sdk" => 6,
+                "flutter" => 7,
+                _ => 8
             })
             .ThenBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -61,6 +68,13 @@ public sealed class InstallOrchestrator
             || string.Equals(package.Detect, "wsl", StringComparison.OrdinalIgnoreCase))
         {
             return await _wsl.InstallAsync(package, log, ct).ConfigureAwait(false);
+        }
+
+        if (string.Equals(package.Installer, "flutter", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(package.Detect, "flutter", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(package.Key, "flutter", StringComparison.OrdinalIgnoreCase))
+        {
+            return await _flutter.InstallAsync(package, log, ct).ConfigureAwait(false);
         }
 
         log?.Invoke($"[*] Installation: {package.Name} ({package.Id})");
@@ -108,6 +122,12 @@ public sealed class InstallOrchestrator
         if (string.Equals(package.Detect, "wsl", StringComparison.OrdinalIgnoreCase))
         {
             return await _wsl.IsInstalledAsync(ct).ConfigureAwait(false);
+        }
+
+        if (string.Equals(package.Detect, "flutter", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(package.Key, "flutter", StringComparison.OrdinalIgnoreCase))
+        {
+            return await _flutter.IsInstalledAsync(ct).ConfigureAwait(false);
         }
 
         return await _winget.IsInstalledAsync(package.Id, ct).ConfigureAwait(false);
