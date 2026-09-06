@@ -1,5 +1,202 @@
 {
-  "version": 1,
+  "version": 2,
+  "profiles": [
+    {
+      "key": "base",
+      "name": "Base",
+      "description": "Socle commun pour tout poste de developpement.",
+      "packages": [
+        "wsl",
+        "git",
+        "chrome",
+        "vscode",
+        "cursor",
+        "windows-terminal",
+        "github-cli",
+        "powertoys",
+        "powershell7",
+        "antigravity-ide",
+        "antigravity",
+        "kiro"
+      ]
+    },
+    {
+      "key": "frontend",
+      "name": "Frontend",
+      "description": "Web frontend: Node, navigateurs, API client, design handoff.",
+      "packages": [
+        "wsl",
+        "git",
+        "chrome",
+        "arc",
+        "firefox",
+        "vscode",
+        "cursor",
+        "webstorm",
+        "windows-terminal",
+        "github-cli",
+        "powertoys",
+        "powershell7",
+        "antigravity-ide",
+        "antigravity",
+        "kiro",
+        "node",
+        "fnm",
+        "postman",
+        "figma"
+      ]
+    },
+    {
+      "key": "backend",
+      "name": "Backend",
+      "description": "API / services: JDK, IDE, Docker, bases de donnees, Python, Maven.",
+      "packages": [
+        "wsl",
+        "git",
+        "chrome",
+        "vscode",
+        "cursor",
+        "windows-terminal",
+        "github-cli",
+        "powertoys",
+        "powershell7",
+        "antigravity-ide",
+        "antigravity",
+        "kiro",
+        "temurin21",
+        "intellij-ultimate",
+        "docker",
+        "postgresql",
+        "pgadmin",
+        "dbeaver",
+        "sqldeveloper",
+        "postman",
+        "python",
+        "maven"
+      ]
+    },
+    {
+      "key": "fullstack",
+      "name": "Fullstack",
+      "description": "Union Frontend + Backend.",
+      "packages": [
+        "wsl",
+        "git",
+        "chrome",
+        "arc",
+        "firefox",
+        "vscode",
+        "cursor",
+        "webstorm",
+        "windows-terminal",
+        "github-cli",
+        "powertoys",
+        "powershell7",
+        "antigravity-ide",
+        "antigravity",
+        "kiro",
+        "node",
+        "fnm",
+        "postman",
+        "figma",
+        "temurin21",
+        "intellij-ultimate",
+        "docker",
+        "postgresql",
+        "pgadmin",
+        "dbeaver",
+        "sqldeveloper",
+        "python",
+        "maven"
+      ]
+    },
+    {
+      "key": "devops",
+      "name": "DevOps",
+      "description": "Conteneurs, cloud CLI, IaC, Kubernetes, terminal avance.",
+      "packages": [
+        "wsl",
+        "git",
+        "chrome",
+        "vscode",
+        "cursor",
+        "windows-terminal",
+        "github-cli",
+        "powertoys",
+        "powershell7",
+        "antigravity-ide",
+        "antigravity",
+        "kiro",
+        "docker",
+        "kubectl",
+        "helm",
+        "terraform",
+        "python",
+        "aws-cli",
+        "azure-cli",
+        "mobaxterm",
+        "oh-my-posh"
+      ]
+    },
+    {
+      "key": "mobile",
+      "name": "Mobile",
+      "description": "Android / Flutter / React Native: JDK, Android Studio, Flutter, Dart, ADB, scrcpy.",
+      "packages": [
+        "wsl",
+        "git",
+        "chrome",
+        "vscode",
+        "cursor",
+        "windows-terminal",
+        "github-cli",
+        "powertoys",
+        "powershell7",
+        "antigravity-ide",
+        "antigravity",
+        "kiro",
+        "temurin17",
+        "android-studio",
+        "android-sdk-platform-tools",
+        "dart-sdk",
+        "flutter",
+        "node",
+        "fnm",
+        "watchman",
+        "scrcpy",
+        "firebase-cli",
+        "postman",
+        "figma",
+        "docker"
+      ]
+    },
+    {
+      "key": "ux-ui-web-designer",
+      "name": "UX/UI Web Designer",
+      "description": "Design produit web: Figma, graphisme FOSS, captures, Notion.",
+      "packages": [
+        "wsl",
+        "git",
+        "chrome",
+        "firefox",
+        "vscode",
+        "cursor",
+        "windows-terminal",
+        "github-cli",
+        "powertoys",
+        "powershell7",
+        "antigravity-ide",
+        "antigravity",
+        "kiro",
+        "figma",
+        "inkscape",
+        "gimp",
+        "blender",
+        "sharex",
+        "notion"
+      ]
+    }
+  ],
   "packages": [
     {
       "key": "wsl",
@@ -8,7 +205,7 @@
       "source": "winget",
       "detect": "wsl",
       "installer": "wsl",
-      "tags": ["base", "containers", "wsl"],
+      "tags": ["base", "containers", "wsl", "devops"],
       "default": true,
       "requiresAdmin": true,
       "notes": "Active les composants Windows + installe WSL2. Un redemarrage peut etre requis avant Docker Desktop."
@@ -26,7 +223,7 @@
       "name": "Google Chrome",
       "id": "Google.Chrome",
       "source": "winget",
-      "tags": ["base", "browser"],
+      "tags": ["base", "browser", "frontend", "ux"],
       "default": true
     },
     {
@@ -34,40 +231,49 @@
       "name": "Arc Browser",
       "id": "TheBrowserCompany.Arc",
       "source": "winget",
-      "tags": ["browser"],
-      "default": true
+      "tags": ["browser", "frontend"],
+      "default": false
+    },
+    {
+      "key": "firefox",
+      "name": "Mozilla Firefox",
+      "id": "Mozilla.Firefox",
+      "source": "winget",
+      "tags": ["browser", "frontend", "ux"],
+      "default": false
     },
     {
       "key": "temurin17",
       "name": "Eclipse Temurin JDK 17 (LTS)",
       "id": "EclipseAdoptium.Temurin.17.JDK",
       "source": "winget",
-      "tags": ["java", "jdk"],
-      "default": true
+      "tags": ["java", "jdk", "backend", "mobile"],
+      "default": false,
+      "notes": "JDK recommande pour Android Gradle Plugin / Android Studio."
     },
     {
       "key": "temurin21",
       "name": "Eclipse Temurin JDK 21 (LTS)",
       "id": "EclipseAdoptium.Temurin.21.JDK",
       "source": "winget",
-      "tags": ["java", "jdk"],
-      "default": true
+      "tags": ["java", "jdk", "backend"],
+      "default": false
     },
     {
       "key": "temurin25",
       "name": "Eclipse Temurin JDK 25 (LTS)",
       "id": "EclipseAdoptium.Temurin.25.JDK",
       "source": "winget",
-      "tags": ["java", "jdk"],
-      "default": true
+      "tags": ["java", "jdk", "backend"],
+      "default": false
     },
     {
       "key": "intellij-ultimate",
       "name": "IntelliJ IDEA Ultimate",
       "id": "JetBrains.IntelliJIDEA.Ultimate",
       "source": "winget",
-      "tags": ["ide", "java"],
-      "default": true,
+      "tags": ["ide", "java", "backend"],
+      "default": false,
       "notes": "Licence JetBrains requise pour l'activation."
     },
     {
@@ -75,26 +281,35 @@
       "name": "IntelliJ IDEA Community",
       "id": "JetBrains.IntelliJIDEA.Community",
       "source": "winget",
-      "tags": ["ide", "java"],
+      "tags": ["ide", "java", "backend"],
       "default": false,
       "notes": "Alternative gratuite a Ultimate."
+    },
+    {
+      "key": "webstorm",
+      "name": "WebStorm",
+      "id": "JetBrains.WebStorm",
+      "source": "winget",
+      "tags": ["ide", "frontend"],
+      "default": false,
+      "notes": "Licence JetBrains requise pour l'activation."
     },
     {
       "key": "docker",
       "name": "Docker Desktop",
       "id": "Docker.DockerDesktop",
       "source": "winget",
-      "tags": ["containers", "base"],
-      "default": true,
+      "tags": ["containers", "base", "backend", "devops", "mobile"],
+      "default": false,
       "requiresAdmin": true,
-      "notes": "Prefere WSL2. Installe WSL avant si possible (inclus dans -Defaults)."
+      "notes": "Prefere WSL2. Installe WSL avant si possible."
     },
     {
       "key": "cursor",
       "name": "Cursor",
       "id": "Anysphere.Cursor",
       "source": "winget",
-      "tags": ["ide", "ai"],
+      "tags": ["ide", "ai", "base"],
       "default": true
     },
     {
@@ -102,7 +317,7 @@
       "name": "Antigravity IDE",
       "id": "Google.AntigravityIDE",
       "source": "winget",
-      "tags": ["ide", "ai"],
+      "tags": ["ide", "ai", "base"],
       "default": true,
       "notes": "Installer avant Antigravity Agent. Les deux peuvent entrer en conflit s'ils partagent le meme dossier."
     },
@@ -111,7 +326,7 @@
       "name": "Antigravity Agent",
       "id": "Google.Antigravity",
       "source": "winget",
-      "tags": ["ai"],
+      "tags": ["ai", "base"],
       "default": true,
       "notes": "Installer apres Antigravity IDE. Attention au conflit de repertoire d'installation."
     },
@@ -120,7 +335,7 @@
       "name": "Kiro IDE",
       "id": "Amazon.Kiro",
       "source": "winget",
-      "tags": ["ide", "ai"],
+      "tags": ["ide", "ai", "base"],
       "default": true
     },
     {
@@ -128,47 +343,115 @@
       "name": "DBeaver Community",
       "id": "DBeaver.DBeaver.Community",
       "source": "winget",
-      "tags": ["database"],
-      "default": true
+      "tags": ["database", "backend"],
+      "default": false
+    },
+    {
+      "key": "postgresql",
+      "name": "PostgreSQL 17",
+      "id": "PostgreSQL.PostgreSQL.17",
+      "source": "winget",
+      "tags": ["database", "postgres", "backend"],
+      "default": false,
+      "requiresAdmin": true,
+      "notes": "Serveur PostgreSQL 17. L'installateur peut demander un mot de passe superutilisateur."
     },
     {
       "key": "pgadmin",
       "name": "pgAdmin 4",
       "id": "PostgreSQL.pgAdmin",
       "source": "winget",
-      "tags": ["database", "postgres"],
-      "default": true
+      "tags": ["database", "postgres", "backend"],
+      "default": false
+    },
+    {
+      "key": "sqldeveloper",
+      "name": "Oracle SQL Developer",
+      "id": "Oracle.SQLDeveloper",
+      "source": "winget",
+      "tags": ["database", "oracle", "backend"],
+      "default": false,
+      "notes": "IDE gratuit pour Oracle Database (et JDBC)."
     },
     {
       "key": "postman",
       "name": "Postman",
       "id": "Postman.Postman",
       "source": "winget",
-      "tags": ["api"],
-      "default": true
+      "tags": ["api", "frontend", "backend", "mobile"],
+      "default": false
     },
     {
       "key": "node",
       "name": "Node.js LTS",
       "id": "OpenJS.NodeJS.LTS",
       "source": "winget",
-      "tags": ["runtime", "frontend", "backend"],
-      "default": true
+      "tags": ["runtime", "frontend", "backend", "mobile"],
+      "default": false
+    },
+    {
+      "key": "fnm",
+      "name": "fnm (Fast Node Manager)",
+      "id": "Schniz.fnm",
+      "source": "winget",
+      "tags": ["runtime", "frontend", "node", "mobile"],
+      "default": false,
+      "notes": "Gestionnaire de versions Node. Configurer le shell apres installation."
     },
     {
       "key": "python",
       "name": "Python 3.13",
       "id": "Python.Python.3.13",
       "source": "winget",
-      "tags": ["runtime", "python"],
-      "default": true
+      "tags": ["runtime", "python", "backend", "devops"],
+      "default": false
+    },
+    {
+      "key": "maven",
+      "name": "Apache Maven",
+      "id": "Apache.Maven",
+      "source": "winget",
+      "tags": ["build", "java", "backend"],
+      "default": false
     },
     {
       "key": "vscode",
       "name": "Visual Studio Code",
       "id": "Microsoft.VisualStudioCode",
       "source": "winget",
-      "tags": ["ide", "editor"],
+      "tags": ["ide", "editor", "base"],
+      "default": true
+    },
+    {
+      "key": "windows-terminal",
+      "name": "Windows Terminal",
+      "id": "Microsoft.WindowsTerminal",
+      "source": "winget",
+      "tags": ["terminal", "base"],
+      "default": true
+    },
+    {
+      "key": "powershell7",
+      "name": "PowerShell 7",
+      "id": "Microsoft.PowerShell",
+      "source": "winget",
+      "tags": ["shell", "base"],
+      "default": true
+    },
+    {
+      "key": "github-cli",
+      "name": "GitHub CLI",
+      "id": "GitHub.cli",
+      "source": "winget",
+      "tags": ["vcs", "cli", "base", "devops"],
+      "default": true
+    },
+    {
+      "key": "powertoys",
+      "name": "Microsoft PowerToys",
+      "id": "Microsoft.PowerToys",
+      "source": "winget",
+      "tags": ["productivity", "base"],
       "default": true
     },
     {
@@ -176,8 +459,169 @@
       "name": "MobaXterm",
       "id": "Mobatek.MobaXterm",
       "source": "winget",
-      "tags": ["terminal", "ssh"],
-      "default": true
+      "tags": ["terminal", "ssh", "devops"],
+      "default": false
+    },
+    {
+      "key": "oh-my-posh",
+      "name": "Oh My Posh",
+      "id": "JanDeDobbeleer.OhMyPosh",
+      "source": "winget",
+      "tags": ["shell", "terminal", "devops"],
+      "default": false
+    },
+    {
+      "key": "kubectl",
+      "name": "kubectl",
+      "id": "Kubernetes.kubectl",
+      "source": "winget",
+      "tags": ["kubernetes", "devops", "cli"],
+      "default": false
+    },
+    {
+      "key": "helm",
+      "name": "Helm",
+      "id": "Helm.Helm",
+      "source": "winget",
+      "tags": ["kubernetes", "devops", "cli"],
+      "default": false
+    },
+    {
+      "key": "terraform",
+      "name": "Terraform",
+      "id": "Hashicorp.Terraform",
+      "source": "winget",
+      "tags": ["iac", "devops", "cli"],
+      "default": false
+    },
+    {
+      "key": "aws-cli",
+      "name": "AWS CLI",
+      "id": "Amazon.AWSCLI",
+      "source": "winget",
+      "tags": ["cloud", "devops", "cli"],
+      "default": false
+    },
+    {
+      "key": "azure-cli",
+      "name": "Azure CLI",
+      "id": "Microsoft.AzureCLI",
+      "source": "winget",
+      "tags": ["cloud", "devops", "cli"],
+      "default": false
+    },
+    {
+      "key": "figma",
+      "name": "Figma",
+      "id": "Figma.Figma",
+      "source": "winget",
+      "tags": ["design", "ux", "frontend", "mobile"],
+      "default": false
+    },
+    {
+      "key": "inkscape",
+      "name": "Inkscape",
+      "id": "Inkscape.Inkscape",
+      "source": "winget",
+      "tags": ["design", "ux", "vector"],
+      "default": false
+    },
+    {
+      "key": "gimp",
+      "name": "GIMP",
+      "id": "GIMP.GIMP",
+      "source": "winget",
+      "tags": ["design", "ux", "raster"],
+      "default": false
+    },
+    {
+      "key": "blender",
+      "name": "Blender",
+      "id": "BlenderFoundation.Blender",
+      "source": "winget",
+      "tags": ["design", "ux", "3d"],
+      "default": false
+    },
+    {
+      "key": "sharex",
+      "name": "ShareX",
+      "id": "ShareX.ShareX",
+      "source": "winget",
+      "tags": ["productivity", "ux", "capture"],
+      "default": false
+    },
+    {
+      "key": "notion",
+      "name": "Notion",
+      "id": "Notion.Notion",
+      "source": "winget",
+      "tags": ["productivity", "ux"],
+      "default": false
+    },
+    {
+      "key": "android-studio",
+      "name": "Android Studio",
+      "id": "Google.AndroidStudio",
+      "source": "winget",
+      "tags": ["ide", "mobile", "android"],
+      "default": false,
+      "requiresAdmin": true,
+      "notes": "Necessite un JDK (Temurin 17 inclus dans le profil Mobile). Configurer le SDK Android au premier lancement."
+    },
+    {
+      "key": "android-sdk-platform-tools",
+      "name": "Android SDK Platform-Tools",
+      "id": "Google.PlatformTools",
+      "source": "winget",
+      "tags": ["mobile", "android", "cli"],
+      "default": false,
+      "notes": "adb et fastboot. Peut necessiter un PATH / Developer Mode."
+    },
+    {
+      "key": "dart-sdk",
+      "name": "Dart SDK",
+      "id": "Google.DartSDK",
+      "source": "winget",
+      "tags": ["mobile", "flutter", "runtime"],
+      "default": false,
+      "notes": "SDK Dart autonome (utile hors bundle Flutter)."
+    },
+    {
+      "key": "flutter",
+      "name": "Flutter SDK",
+      "id": "Flutter.SDK",
+      "source": "custom",
+      "detect": "flutter",
+      "installer": "flutter",
+      "tags": ["mobile", "flutter", "sdk"],
+      "default": false,
+      "notes": "Telecharge le canal stable officiel (pas sur winget). Puis: flutter doctor."
+    },
+    {
+      "key": "scrcpy",
+      "name": "scrcpy",
+      "id": "Genymobile.scrcpy",
+      "source": "winget",
+      "tags": ["mobile", "android", "debug"],
+      "default": false,
+      "notes": "Miroir / controle d'un appareil Android en USB ou TCP."
+    },
+    {
+      "key": "watchman",
+      "name": "Watchman",
+      "id": "facebook.watchman",
+      "source": "winget",
+      "tags": ["mobile", "react-native", "cli"],
+      "default": false,
+      "notes": "File watcher Meta, utile pour React Native. Dependance VC++ Redist possible."
+    },
+    {
+      "key": "firebase-cli",
+      "name": "Firebase CLI",
+      "id": "Google.FirebaseCLI",
+      "source": "winget",
+      "tags": ["mobile", "cloud", "cli"],
+      "default": false
     }
   ]
 }

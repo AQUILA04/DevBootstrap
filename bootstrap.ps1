@@ -7,6 +7,9 @@
   .\bootstrap.ps1
   .\bootstrap.ps1 -All
   .\bootstrap.ps1 -Defaults
+  .\bootstrap.ps1 -Profile frontend
+  .\bootstrap.ps1 -Profile mobile
+  .\bootstrap.ps1 -Profile devops
   .\bootstrap.ps1 -Keys git,node,docker
   .\bootstrap.ps1 -Tags java,ide
   .\bootstrap.ps1 -List
@@ -16,6 +19,7 @@
 param(
     [switch]$All,
     [switch]$Defaults,
+    [string]$Profile,
     [string[]]$Keys,
     [string[]]$Tags,
     [switch]$List,
@@ -70,6 +74,27 @@ function Get-Prop {
     return $prop.Value
 }
 
+function Show-ProfileTable {
+    param([object[]]$Profiles)
+    if (-not $Profiles -or $Profiles.Count -eq 0) {
+        Write-Host "Aucun profil defini (catalogue v1)." -ForegroundColor DarkGray
+        return
+    }
+
+    Write-Host "=== Profils ===" -ForegroundColor Magenta
+    foreach ($profile in $Profiles) {
+        $pkgKeys = @(Get-Prop $profile "packages" @())
+        $desc = Get-Prop $profile "description" ""
+        Write-Host ("  {0,-22} {1,3} outils  {2}" -f $profile.key, $pkgKeys.Count, $profile.name) -ForegroundColor Cyan
+        if ($desc) {
+            Write-Host ("    {0}" -f $desc) -ForegroundColor DarkGray
+        }
+    }
+    Write-Host ""
+    Write-Host "  Exemple: .\bootstrap.ps1 -Profile frontend" -ForegroundColor DarkGray
+    Write-Host ""
+}
+
 function Show-PackageTable {
     param([object[]]$Packages)
     $i = 1
@@ -85,7 +110,7 @@ function Show-PackageTable {
         $i++
     }
     Write-Host ""
-    Write-Host "  * = inclus dans -Defaults" -ForegroundColor DarkGray
+    Write-Host "  * = inclus dans -Defaults / profil Base" -ForegroundColor DarkGray
 }
 
 function Select-PackagesInteractive {
@@ -95,9 +120,10 @@ function Select-PackagesInteractive {
     Write-Host "=== StackPilot ===" -ForegroundColor Magenta
     Write-Host "Selectionne les outils a installer." -ForegroundColor Gray
     Write-Host "  all            -> tout installer"
-    Write-Host "  defaults / d   -> selection par defaut (*)"
+    Write-Host "  defaults / d   -> profil Base (*)"
     Write-Host "  1,3,5-8        -> selection multiple"
     Write-Host "  q              -> quitter"
+    Write-Host "  (ou: .\bootstrap.ps1 -Profile frontend|backend|fullstack|devops|mobile|ux-ui-web-designer)"
     Write-Host ""
     Show-PackageTable -Packages $Packages
 
@@ -208,7 +234,104 @@ function Test-IsPackageInstalled {
     $detect = Get-Prop $Package "detect" "winget"
     switch ($detect) {
         "wsl" { return Test-WslInstalled }
+        "flutter" { return Test-FlutterInstalled }
         default { return Test-PackageInstalled -Id $Package.id }
+    }
+}
+
+function Get-FlutterRoot {
+    return Join-Path $env:LOCALAPPDATA "flutter"
+}
+
+function Test-FlutterInstalled {
+    $bat = Join-Path (Get-FlutterRoot) "bin\flutter.bat"
+    if (Test-Path -LiteralPath $bat) { return $true }
+    $cmd = Get-Command flutter -ErrorAction SilentlyContinue
+    return $null -ne $cmd
+}
+
+function Add-FlutterToUserPath {
+    $bin = Join-Path (Get-FlutterRoot) "bin"
+    if (-not (Test-Path -LiteralPath $bin)) { return }
+    $current = [Environment]::GetEnvironmentVariable("Path", "User")
+    if (-not $current) { $current = "" }
+    $parts = @($current -split ";" | Where-Object { $_ -and $_.Trim() })
+    if ($parts | Where-Object { $_.Trim().ToLowerInvariant() -eq $bin.ToLowerInvariant() }) {
+        return
+    }
+    $updated = if ([string]::IsNullOrWhiteSpace($current)) { $bin } else { ($current.TrimEnd(';') + ";" + $bin) }
+    [Environment]::SetEnvironmentVariable("Path", $updated, "User")
+    Write-Info "PATH utilisateur mis a jour (+ $bin)"
+}
+
+function Install-FlutterSdk {
+    param([object]$Package)
+
+    if ($WhatIfPreference) {
+        Write-Info "WhatIf: telechargement Flutter SDK stable vers $(Get-FlutterRoot)"
+        return [pscustomobject]@{ status = "whatif"; message = "Simulation" }
+    }
+
+    if (Test-FlutterInstalled) {
+        Add-FlutterToUserPath
+        Write-Ok "Flutter deja present"
+        return [pscustomobject]@{ status = "already"; message = "Deja present" }
+    }
+
+    $releasesUrl = "https://storage.googleapis.com/flutter_infra_release/releases/releases_windows.json"
+    Write-Info "Lecture du catalogue de releases Flutter..."
+    try {
+        $meta = Invoke-RestMethod -Uri $releasesUrl -UseBasicParsing
+    }
+    catch {
+        return [pscustomobject]@{ status = "failed"; message = "Impossible de lire $releasesUrl : $_" }
+    }
+
+    $stableHash = $meta.current_release.stable
+    $release = @($meta.releases | Where-Object {
+            $_.hash -eq $stableHash -and $_.channel -eq "stable"
+        } | Select-Object -First 1)
+    if (-not $release) {
+        return [pscustomobject]@{ status = "failed"; message = "Release Flutter stable introuvable." }
+    }
+
+    $downloadUrl = ($meta.base_url.TrimEnd('/') + '/' + $release.archive.TrimStart('/'))
+    $version = $release.version
+    Write-Info "Telechargement Flutter $version..."
+    Write-Host "    $downloadUrl" -ForegroundColor DarkGray
+
+    $tempDir = Join-Path $env:TEMP ("stackpilot-flutter-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+    $zipPath = Join-Path $tempDir "flutter_windows-stable.zip"
+    $installRoot = Get-FlutterRoot
+    $extractParent = Split-Path -Parent $installRoot
+
+    try {
+        Invoke-WebRequest -Uri $downloadUrl -OutFile $zipPath -UseBasicParsing
+        if (Test-Path -LiteralPath $installRoot) {
+            Write-Info "Suppression de l'ancien dossier Flutter local..."
+            Remove-Item -LiteralPath $installRoot -Recurse -Force
+        }
+        if (-not (Test-Path -LiteralPath $extractParent)) {
+            New-Item -ItemType Directory -Path $extractParent -Force | Out-Null
+        }
+        Write-Info "Extraction vers $installRoot..."
+        Expand-Archive -LiteralPath $zipPath -DestinationPath $extractParent -Force
+        $bat = Join-Path $installRoot "bin\flutter.bat"
+        if (-not (Test-Path -LiteralPath $bat)) {
+            return [pscustomobject]@{ status = "failed"; message = "Extraction incomplete: $bat introuvable." }
+        }
+        Add-FlutterToUserPath
+        Write-Ok "Flutter $version installe. Ouvre un nouveau terminal puis: flutter doctor"
+        return [pscustomobject]@{ status = "installed"; message = "OK ($version)" }
+    }
+    catch {
+        return [pscustomobject]@{ status = "failed"; message = "$_" }
+    }
+    finally {
+        if (Test-Path -LiteralPath $tempDir) {
+            Remove-Item -LiteralPath $tempDir -Recurse -Force -ErrorAction SilentlyContinue
+        }
     }
 }
 
@@ -364,6 +487,16 @@ function Install-Package {
         return [pscustomobject]$result
     }
 
+    if ($installer -eq "flutter") {
+        $flutterResult = Install-FlutterSdk -Package $Package
+        $result.status = $flutterResult.status
+        $result.message = $flutterResult.message
+        if ($result.status -eq "failed") {
+            Write-ErrMsg "$($Package.name): $($result.message)"
+        }
+        return [pscustomobject]$result
+    }
+
     $args = @(
         "install",
         "--id", $Package.id,
@@ -415,18 +548,65 @@ function Normalize-ListArg {
     return @($result)
 }
 
+function Get-ProfileByKey {
+    param(
+        [object]$Catalog,
+        [string]$Key
+    )
+    $profiles = @(Get-Prop $Catalog "profiles" @())
+    if ($profiles.Count -eq 0) { return $null }
+    $wanted = $Key.ToLowerInvariant()
+    return @($profiles | Where-Object { $_.key.ToLowerInvariant() -eq $wanted } | Select-Object -First 1)
+}
+
+function Resolve-ProfilePackages {
+    param(
+        [object]$Catalog,
+        [object[]]$Packages,
+        [string]$ProfileKey
+    )
+
+    $profile = Get-ProfileByKey -Catalog $Catalog -Key $ProfileKey
+    if (-not $profile) {
+        $available = @(Get-Prop $Catalog "profiles" @() | ForEach-Object { $_.key })
+        if ($available.Count -eq 0) {
+            throw "Aucun profil dans le catalogue. Utilise -Defaults, -Keys ou -Tags."
+        }
+        throw "Profil inconnu: $ProfileKey. Disponibles: $($available -join ', ')."
+    }
+
+    $wanted = @(Get-Prop $profile "packages" @() | ForEach-Object { $_.ToLowerInvariant() })
+    $selected = @($Packages | Where-Object { $wanted -contains $_.key.ToLowerInvariant() })
+    $selectedKeys = @($selected | ForEach-Object { $_.key.ToLowerInvariant() })
+    $missing = @($wanted | Where-Object { $selectedKeys -notcontains $_ })
+    if ($missing.Count -gt 0) {
+        throw "Profil '$ProfileKey': cles inconnues dans packages: $($missing -join ', ')."
+    }
+    return $selected
+}
+
 function Resolve-Selection {
     param(
+        [object]$Catalog,
         [object[]]$Packages,
         [switch]$All,
         [switch]$Defaults,
+        [string]$Profile,
         [string[]]$Keys,
         [string[]]$Tags
     )
 
     if ($All) { return $Packages }
 
+    if (-not [string]::IsNullOrWhiteSpace($Profile)) {
+        return Resolve-ProfilePackages -Catalog $Catalog -Packages $Packages -ProfileKey $Profile.Trim()
+    }
+
     if ($Defaults) {
+        $baseProfile = Get-ProfileByKey -Catalog $Catalog -Key "base"
+        if ($baseProfile) {
+            return Resolve-ProfilePackages -Catalog $Catalog -Packages $Packages -ProfileKey "base"
+        }
         return @($Packages | Where-Object { [bool](Get-Prop $_ "default" $false) })
     }
 
@@ -468,14 +648,17 @@ if (-not $CatalogPath) {
 Assert-Winget
 $catalog = Get-Catalog -Path $CatalogPath
 $packages = @($catalog.packages)
+$profiles = @(Get-Prop $catalog "profiles" @())
 
 if ($List) {
+    Write-Host "Catalogue version: $(Get-Prop $catalog 'version' '?')" -ForegroundColor DarkGray
+    Show-ProfileTable -Profiles $profiles
     Show-PackageTable -Packages $packages
     Write-Host "Cles: $(($packages | ForEach-Object { $_.key }) -join ', ')" -ForegroundColor DarkGray
     exit 0
 }
 
-$selection = Resolve-Selection -Packages $packages -All:$All -Defaults:$Defaults -Keys $Keys -Tags $Tags
+$selection = Resolve-Selection -Catalog $catalog -Packages $packages -All:$All -Defaults:$Defaults -Profile $Profile -Keys $Keys -Tags $Tags
 if ($null -eq $selection) {
     $selection = Select-PackagesInteractive -Packages $packages
 }
@@ -493,10 +676,15 @@ $selection = @(
         Expression = {
             switch ($_.key) {
                 "wsl" { 0 }
-                "docker" { 1 }
-                "antigravity-ide" { 2 }
-                "antigravity" { 3 }
-                default { 4 }
+                "temurin17" { 1 }
+                "temurin21" { 1 }
+                "docker" { 2 }
+                "android-studio" { 3 }
+                "antigravity-ide" { 4 }
+                "antigravity" { 5 }
+                "dart-sdk" { 6 }
+                "flutter" { 7 }
+                default { 8 }
             }
         }
     }, @{ Expression = { [array]::IndexOf($catalogKeys, $_.key) } }
