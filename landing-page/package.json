@@ -1,5 +1,12 @@
 {
   "name": "stackpilot-landing",
   "private": true,
-  "description": "Static landing for StackPilot (OptimizeSolux)"
+  "description": "Static landing for StackPilot (OptimizeSolux)",
+  "scripts": {
+    "dev": "serve . -l 3000",
+    "start": "serve . -l 3000"
+  },
+  "devDependencies": {
+    "serve": "^14.2.5"
+  }
 }

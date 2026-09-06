@@ -1,0 +1,13 @@
+{
+  "name": "StackPilot",
+  "install": "cd landing-page && npm install",
+  "terminals": [
+    {
+      "name": "landing-page",
+      "command": "cd landing-page && npm run dev"
+    }
+  ],
+  "ports": [
+    3000
+  ]
+}
