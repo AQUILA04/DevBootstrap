@@ -1,8 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
-  <rect width="1200" height="630" fill="#0B1F24"/>
-  <circle cx="980" cy="120" r="220" fill="#0F8F7B" opacity="0.35"/>
-  <circle cx="180" cy="520" r="180" fill="#D97706" opacity="0.22"/>
-  <text x="80" y="250" fill="#F3F6F4" font-family="Arial, sans-serif" font-size="92" font-weight="700">StackPilot</text>
-  <text x="80" y="340" fill="#D7E6E2" font-family="Arial, sans-serif" font-size="40">Ton poste de dev, pret en un lancement.</text>
-  <text x="80" y="420" fill="#7DCFBF" font-family="Arial, sans-serif" font-size="28">Windows · winget · OptimizeSolux</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#0C1C18"/>
+  <circle cx="980" cy="120" r="220" fill="#1F6B54" opacity="0.35"/>
+  <circle cx="180" cy="520" r="180" fill="#2F9E7B" opacity="0.18"/>
+  <rect x="72" y="72" width="56" height="56" rx="14" fill="#2F9E7B"/>
+  <path d="M86 108.5L98 92l8 10 12-14v24H86z" fill="#E8F5EF"/>
+  <text x="72" y="220" fill="#E8F5EF" font-family="Arial, sans-serif" font-size="84" font-weight="700">StackPilot</text>
+  <text x="72" y="290" fill="#A8CBBE" font-family="Arial, sans-serif" font-size="36">Ton poste de dev, pret en un lancement.</text>
+  <text x="72" y="360" fill="#2F9E7B" font-family="Arial, sans-serif" font-size="24">Windows  ·  winget  ·  OptimizeSolux</text>
 </svg>
