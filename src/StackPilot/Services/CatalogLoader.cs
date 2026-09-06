@@ -42,6 +42,38 @@ public static class CatalogLoader
             throw new InvalidOperationException("Catalogue vide.");
         }
 
+        ValidateProfiles(catalog);
         return catalog;
+    }
+
+    internal static void ValidateProfiles(CatalogDocument catalog)
+    {
+        if (catalog.Profiles.Count == 0)
+        {
+            return;
+        }
+
+        var packageKeys = new HashSet<string>(
+            catalog.Packages.Select(p => p.Key),
+            StringComparer.OrdinalIgnoreCase);
+
+        foreach (var profile in catalog.Profiles)
+        {
+            if (string.IsNullOrWhiteSpace(profile.Key))
+            {
+                throw new InvalidOperationException("Profil sans cle (key) dans le catalogue.");
+            }
+
+            var missing = profile.Packages
+                .Where(key => !string.IsNullOrWhiteSpace(key) && !packageKeys.Contains(key))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (missing.Count > 0)
+            {
+                throw new InvalidOperationException(
+                    $"Profil '{profile.Key}': cles inconnues: {string.Join(", ", missing)}.");
+            }
+        }
     }
 }

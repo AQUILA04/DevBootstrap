@@ -12,7 +12,7 @@ internal static class Program
         try
         {
             var catalog = CatalogLoader.Load();
-            Application.Run(new MainForm(catalog.Packages));
+            Application.Run(new MainForm(catalog));
         }
         catch (Exception ex)
         {

@@ -7,8 +7,28 @@ public sealed class CatalogDocument
     [JsonPropertyName("version")]
     public int Version { get; set; }
 
+    [JsonPropertyName("profiles")]
+    public List<ProfileEntry> Profiles { get; set; } = new();
+
     [JsonPropertyName("packages")]
     public List<PackageEntry> Packages { get; set; } = new();
+}
+
+public sealed class ProfileEntry
+{
+    [JsonPropertyName("key")]
+    public string Key { get; set; } = "";
+
+    [JsonPropertyName("name")]
+    public string Name { get; set; } = "";
+
+    [JsonPropertyName("description")]
+    public string? Description { get; set; }
+
+    [JsonPropertyName("packages")]
+    public List<string> Packages { get; set; } = new();
+
+    public override string ToString() => Name;
 }
 
 public sealed class PackageEntry

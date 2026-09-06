@@ -7,7 +7,9 @@ namespace StackPilot;
 public sealed class MainForm : Form
 {
     private readonly List<PackageEntry> _packages;
+    private readonly List<ProfileEntry> _profiles;
     private readonly CheckedListBox _checkedList = new();
+    private readonly ComboBox _profileCombo = new();
     private readonly TextBox _logBox = new();
     private readonly Button _btnInstall = new();
     private readonly Button _btnAll = new();
@@ -15,15 +17,29 @@ public sealed class MainForm : Form
     private readonly Button _btnDefaults = new();
     private readonly Button _btnClose = new();
     private readonly Label _adminLabel = new();
+    private readonly Label _profileHint = new();
     private CancellationTokenSource? _cts;
 
-    public MainForm(IReadOnlyList<PackageEntry> packages)
+    public MainForm(CatalogDocument catalog)
     {
-        _packages = packages.ToList();
+        _packages = catalog.Packages.ToList();
+        _profiles = catalog.Profiles.Count > 0
+            ? catalog.Profiles.ToList()
+            : new List<ProfileEntry>
+            {
+                new()
+                {
+                    Key = "base",
+                    Name = "Base",
+                    Description = "Paquets marques default.",
+                    Packages = _packages.Where(p => p.Default).Select(p => p.Key).ToList()
+                }
+            };
+
         Text = "StackPilot";
         StartPosition = FormStartPosition.CenterScreen;
-        MinimumSize = new Size(640, 520);
-        Size = new Size(760, 640);
+        MinimumSize = new Size(640, 560);
+        Size = new Size(760, 680);
         Font = new Font("Segoe UI", 9F);
 
         var title = new Label
@@ -36,20 +52,39 @@ public sealed class MainForm : Form
 
         var subtitle = new Label
         {
-            Text = "Pack outils de developpement - Coche les logiciels a installer, puis clique Installer.",
+            Text = "Choisis un profil metier, ajuste la checklist, puis clique Installer.",
             Location = new Point(18, 44),
-            Size = new Size(700, 36)
+            Size = new Size(700, 24)
         };
 
-        _checkedList.Location = new Point(20, 88);
-        _checkedList.Size = new Size(700, 260);
+        var profileLabel = new Label
+        {
+            Text = "Profil",
+            Location = new Point(20, 74),
+            AutoSize = true
+        };
+
+        _profileCombo.Location = new Point(70, 70);
+        _profileCombo.Size = new Size(280, 28);
+        _profileCombo.DropDownStyle = ComboBoxStyle.DropDownList;
+        _profileCombo.DisplayMember = nameof(ProfileEntry.Name);
+        foreach (var profile in _profiles)
+        {
+            _profileCombo.Items.Add(profile);
+        }
+
+        _profileHint.Location = new Point(360, 74);
+        _profileHint.Size = new Size(360, 24);
+        _profileHint.ForeColor = Color.DimGray;
+
+        _checkedList.Location = new Point(20, 108);
+        _checkedList.Size = new Size(700, 240);
         _checkedList.CheckOnClick = true;
         _checkedList.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
         foreach (var pkg in _packages)
         {
-            var idx = _checkedList.Items.Add(pkg.DisplayLabel);
-            _checkedList.SetItemChecked(idx, pkg.Default);
+            _checkedList.Items.Add(pkg.DisplayLabel);
         }
 
         _btnAll.Text = "Tout cocher";
@@ -65,13 +100,7 @@ public sealed class MainForm : Form
         _btnDefaults.Text = "Par defaut";
         _btnDefaults.Location = new Point(260, 360);
         _btnDefaults.Size = new Size(110, 30);
-        _btnDefaults.Click += (_, _) =>
-        {
-            for (var i = 0; i < _packages.Count; i++)
-            {
-                _checkedList.SetItemChecked(i, _packages[i].Default);
-            }
-        };
+        _btnDefaults.Click += (_, _) => ApplyBaseProfile();
 
         _adminLabel.Location = new Point(400, 365);
         _adminLabel.Size = new Size(320, 24);
@@ -113,8 +142,19 @@ public sealed class MainForm : Form
             Close();
         };
 
+        _profileCombo.SelectedIndexChanged += (_, _) =>
+        {
+            if (_profileCombo.SelectedItem is ProfileEntry profile)
+            {
+                ApplyProfile(profile);
+            }
+        };
+
         Controls.Add(title);
         Controls.Add(subtitle);
+        Controls.Add(profileLabel);
+        Controls.Add(_profileCombo);
+        Controls.Add(_profileHint);
         Controls.Add(_checkedList);
         Controls.Add(_btnAll);
         Controls.Add(_btnNone);
@@ -123,6 +163,56 @@ public sealed class MainForm : Form
         Controls.Add(_logBox);
         Controls.Add(_btnInstall);
         Controls.Add(_btnClose);
+
+        SelectInitialProfile();
+    }
+
+    private void SelectInitialProfile()
+    {
+        var baseIndex = _profiles.FindIndex(p =>
+            string.Equals(p.Key, "base", StringComparison.OrdinalIgnoreCase));
+        _profileCombo.SelectedIndex = baseIndex >= 0 ? baseIndex : 0;
+    }
+
+    private void ApplyBaseProfile()
+    {
+        var baseProfile = _profiles.FirstOrDefault(p =>
+            string.Equals(p.Key, "base", StringComparison.OrdinalIgnoreCase));
+        if (baseProfile is null)
+        {
+            for (var i = 0; i < _packages.Count; i++)
+            {
+                _checkedList.SetItemChecked(i, _packages[i].Default);
+            }
+
+            return;
+        }
+
+        var index = _profiles.IndexOf(baseProfile);
+        if (_profileCombo.SelectedIndex != index)
+        {
+            _profileCombo.SelectedIndex = index;
+        }
+        else
+        {
+            ApplyProfile(baseProfile);
+        }
+    }
+
+    private void ApplyProfile(ProfileEntry profile)
+    {
+        var wanted = new HashSet<string>(
+            profile.Packages.Where(k => !string.IsNullOrWhiteSpace(k)),
+            StringComparer.OrdinalIgnoreCase);
+
+        for (var i = 0; i < _packages.Count; i++)
+        {
+            _checkedList.SetItemChecked(i, wanted.Contains(_packages[i].Key));
+        }
+
+        _profileHint.Text = string.IsNullOrWhiteSpace(profile.Description)
+            ? $"{wanted.Count} outil(s)"
+            : profile.Description!;
     }
 
     private void SetAll(bool value)
@@ -241,6 +331,7 @@ public sealed class MainForm : Form
         _btnAll.Enabled = !busy;
         _btnNone.Enabled = !busy;
         _btnDefaults.Enabled = !busy;
+        _profileCombo.Enabled = !busy;
         _checkedList.Enabled = !busy;
         Cursor = busy ? Cursors.WaitCursor : Cursors.Default;
     }

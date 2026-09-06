@@ -7,6 +7,8 @@
   .\bootstrap.ps1
   .\bootstrap.ps1 -All
   .\bootstrap.ps1 -Defaults
+  .\bootstrap.ps1 -Profile frontend
+  .\bootstrap.ps1 -Profile devops
   .\bootstrap.ps1 -Keys git,node,docker
   .\bootstrap.ps1 -Tags java,ide
   .\bootstrap.ps1 -List
@@ -16,6 +18,7 @@
 param(
     [switch]$All,
     [switch]$Defaults,
+    [string]$Profile,
     [string[]]$Keys,
     [string[]]$Tags,
     [switch]$List,
@@ -70,6 +73,27 @@ function Get-Prop {
     return $prop.Value
 }
 
+function Show-ProfileTable {
+    param([object[]]$Profiles)
+    if (-not $Profiles -or $Profiles.Count -eq 0) {
+        Write-Host "Aucun profil defini (catalogue v1)." -ForegroundColor DarkGray
+        return
+    }
+
+    Write-Host "=== Profils ===" -ForegroundColor Magenta
+    foreach ($profile in $Profiles) {
+        $pkgKeys = @(Get-Prop $profile "packages" @())
+        $desc = Get-Prop $profile "description" ""
+        Write-Host ("  {0,-22} {1,3} outils  {2}" -f $profile.key, $pkgKeys.Count, $profile.name) -ForegroundColor Cyan
+        if ($desc) {
+            Write-Host ("    {0}" -f $desc) -ForegroundColor DarkGray
+        }
+    }
+    Write-Host ""
+    Write-Host "  Exemple: .\bootstrap.ps1 -Profile frontend" -ForegroundColor DarkGray
+    Write-Host ""
+}
+
 function Show-PackageTable {
     param([object[]]$Packages)
     $i = 1
@@ -85,7 +109,7 @@ function Show-PackageTable {
         $i++
     }
     Write-Host ""
-    Write-Host "  * = inclus dans -Defaults" -ForegroundColor DarkGray
+    Write-Host "  * = inclus dans -Defaults / profil Base" -ForegroundColor DarkGray
 }
 
 function Select-PackagesInteractive {
@@ -95,9 +119,10 @@ function Select-PackagesInteractive {
     Write-Host "=== StackPilot ===" -ForegroundColor Magenta
     Write-Host "Selectionne les outils a installer." -ForegroundColor Gray
     Write-Host "  all            -> tout installer"
-    Write-Host "  defaults / d   -> selection par defaut (*)"
+    Write-Host "  defaults / d   -> profil Base (*)"
     Write-Host "  1,3,5-8        -> selection multiple"
     Write-Host "  q              -> quitter"
+    Write-Host "  (ou: .\bootstrap.ps1 -Profile frontend|backend|fullstack|devops|ux-ui-web-designer)"
     Write-Host ""
     Show-PackageTable -Packages $Packages
 
@@ -415,18 +440,65 @@ function Normalize-ListArg {
     return @($result)
 }
 
+function Get-ProfileByKey {
+    param(
+        [object]$Catalog,
+        [string]$Key
+    )
+    $profiles = @(Get-Prop $Catalog "profiles" @())
+    if ($profiles.Count -eq 0) { return $null }
+    $wanted = $Key.ToLowerInvariant()
+    return @($profiles | Where-Object { $_.key.ToLowerInvariant() -eq $wanted } | Select-Object -First 1)
+}
+
+function Resolve-ProfilePackages {
+    param(
+        [object]$Catalog,
+        [object[]]$Packages,
+        [string]$ProfileKey
+    )
+
+    $profile = Get-ProfileByKey -Catalog $Catalog -Key $ProfileKey
+    if (-not $profile) {
+        $available = @(Get-Prop $Catalog "profiles" @() | ForEach-Object { $_.key })
+        if ($available.Count -eq 0) {
+            throw "Aucun profil dans le catalogue. Utilise -Defaults, -Keys ou -Tags."
+        }
+        throw "Profil inconnu: $ProfileKey. Disponibles: $($available -join ', ')."
+    }
+
+    $wanted = @(Get-Prop $profile "packages" @() | ForEach-Object { $_.ToLowerInvariant() })
+    $selected = @($Packages | Where-Object { $wanted -contains $_.key.ToLowerInvariant() })
+    $selectedKeys = @($selected | ForEach-Object { $_.key.ToLowerInvariant() })
+    $missing = @($wanted | Where-Object { $selectedKeys -notcontains $_ })
+    if ($missing.Count -gt 0) {
+        throw "Profil '$ProfileKey': cles inconnues dans packages: $($missing -join ', ')."
+    }
+    return $selected
+}
+
 function Resolve-Selection {
     param(
+        [object]$Catalog,
         [object[]]$Packages,
         [switch]$All,
         [switch]$Defaults,
+        [string]$Profile,
         [string[]]$Keys,
         [string[]]$Tags
     )
 
     if ($All) { return $Packages }
 
+    if (-not [string]::IsNullOrWhiteSpace($Profile)) {
+        return Resolve-ProfilePackages -Catalog $Catalog -Packages $Packages -ProfileKey $Profile.Trim()
+    }
+
     if ($Defaults) {
+        $baseProfile = Get-ProfileByKey -Catalog $Catalog -Key "base"
+        if ($baseProfile) {
+            return Resolve-ProfilePackages -Catalog $Catalog -Packages $Packages -ProfileKey "base"
+        }
         return @($Packages | Where-Object { [bool](Get-Prop $_ "default" $false) })
     }
 
@@ -468,14 +540,17 @@ if (-not $CatalogPath) {
 Assert-Winget
 $catalog = Get-Catalog -Path $CatalogPath
 $packages = @($catalog.packages)
+$profiles = @(Get-Prop $catalog "profiles" @())
 
 if ($List) {
+    Write-Host "Catalogue version: $(Get-Prop $catalog 'version' '?')" -ForegroundColor DarkGray
+    Show-ProfileTable -Profiles $profiles
     Show-PackageTable -Packages $packages
     Write-Host "Cles: $(($packages | ForEach-Object { $_.key }) -join ', ')" -ForegroundColor DarkGray
     exit 0
 }
 
-$selection = Resolve-Selection -Packages $packages -All:$All -Defaults:$Defaults -Keys $Keys -Tags $Tags
+$selection = Resolve-Selection -Catalog $catalog -Packages $packages -All:$All -Defaults:$Defaults -Profile $Profile -Keys $Keys -Tags $Tags
 if ($null -eq $selection) {
     $selection = Select-PackagesInteractive -Packages $packages
 }
