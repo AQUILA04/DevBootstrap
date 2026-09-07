@@ -425,9 +425,9 @@ public sealed class MainForm : Form
             ColumnCount = 1,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            Dock = DockStyle.Top,
+            Location = Point.Empty,
             BackColor = Color.FromArgb(0xFA, 0xFC, 0xFB),
-            Padding = new Padding(8, 6, 20, 6)
+            Padding = new Padding(8, 6, 12, 6)
         };
         content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 
@@ -496,7 +496,7 @@ public sealed class MainForm : Form
             ColumnCount = 2,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            Dock = DockStyle.Top,
+            Dock = DockStyle.Fill,
             BackColor = highlight ? Foam : Color.Transparent,
             Padding = new Padding(highlight ? 8 : 0, highlight ? 8 : 0, highlight ? 8 : 0, highlight ? 8 : 0),
             Margin = new Padding(0, 0, 0, 4)
