@@ -20,7 +20,6 @@ public sealed class MainForm : Form
 
     private readonly List<PackageEntry> _packages;
     private readonly List<ProfileEntry> _profiles;
-    private readonly CheckedListBox _checkedList = new();
     private readonly ComboBox _profileCombo = new();
     private readonly TextBox _logBox = new();
     private readonly Button _btnInstall = new();
@@ -31,7 +30,10 @@ public sealed class MainForm : Form
     private readonly Label _adminLabel = new();
     private readonly Label _profileHint = new();
     private readonly Label _selectionCount = new();
+    private readonly Panel _toolsScroll = new();
+    private readonly List<(PackageEntry Package, CheckBox Box)> _toolRows = new();
     private CancellationTokenSource? _cts;
+    private bool _suppressCheckEvents;
 
     public MainForm(CatalogDocument catalog)
     {
@@ -51,8 +53,8 @@ public sealed class MainForm : Form
 
         Text = "StackPilot";
         StartPosition = FormStartPosition.CenterScreen;
-        MinimumSize = new Size(820, 660);
-        Size = new Size(920, 740);
+        MinimumSize = new Size(900, 680);
+        Size = new Size(1000, 760);
         Font = new Font("Segoe UI", 9.5F);
         BackColor = Mist;
         ForeColor = Ink;
@@ -76,28 +78,8 @@ public sealed class MainForm : Form
         root.Controls.Add(BuildFooter(), 0, 3);
         Controls.Add(root);
 
-        // ItemCheck fires before the checked state flips; defer the count refresh.
-        // Guard IsHandleCreated: SelectInitialProfile runs during construction and
-        // must not BeginInvoke before the form handle exists.
-        _checkedList.ItemCheck += (_, _) => ScheduleSelectionCountUpdate();
         SelectInitialProfile();
         UpdateSelectionCount();
-    }
-
-    private void ScheduleSelectionCountUpdate()
-    {
-        if (IsDisposed)
-        {
-            return;
-        }
-
-        if (IsHandleCreated)
-        {
-            BeginInvoke(UpdateSelectionCount);
-            return;
-        }
-
-        // During construction, ApplyProfile/UpdateSelectionCount already refresh the label.
     }
 
     private Control BuildHeader()
@@ -229,8 +211,8 @@ public sealed class MainForm : Form
             Padding = new Padding(24, 16, 24, 8),
             BackColor = Mist
         };
-        area.RowStyles.Add(new RowStyle(SizeType.Percent, 60F));
-        area.RowStyles.Add(new RowStyle(SizeType.Percent, 40F));
+        area.RowStyles.Add(new RowStyle(SizeType.Percent, 62F));
+        area.RowStyles.Add(new RowStyle(SizeType.Percent, 38F));
         area.Controls.Add(BuildChecklistCard(), 0, 0);
         area.Controls.Add(BuildLogCard(), 0, 1);
         return area;
@@ -259,7 +241,7 @@ public sealed class MainForm : Form
             BackColor = Color.White,
             Padding = new Padding(16, 12, 16, 10)
         };
-        inner.RowStyles.Add(new RowStyle(SizeType.Absolute, 28));
+        inner.RowStyles.Add(new RowStyle(SizeType.Absolute, 36));
         inner.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         inner.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
 
@@ -267,29 +249,26 @@ public sealed class MainForm : Form
         var title = new Label
         {
             Text = "Outils a installer",
-            Font = new Font("Segoe UI Semibold", 10.5F),
+            Font = new Font("Segoe UI Semibold", 11F),
             ForeColor = Ink,
             AutoSize = true,
-            Location = new Point(0, 4)
+            Location = new Point(0, 6)
         };
-        _selectionCount.Font = new Font("Segoe UI", 9F);
-        _selectionCount.ForeColor = Muted;
+        _selectionCount.Font = new Font("Segoe UI Semibold", 8.5F);
+        _selectionCount.ForeColor = Moss;
         _selectionCount.AutoSize = true;
-        _selectionCount.Location = new Point(150, 6);
+        _selectionCount.BackColor = Foam;
+        _selectionCount.Padding = new Padding(8, 3, 8, 3);
+        _selectionCount.Location = new Point(168, 6);
         head.Controls.Add(title);
         head.Controls.Add(_selectionCount);
 
-        _checkedList.Dock = DockStyle.Fill;
-        _checkedList.CheckOnClick = true;
-        _checkedList.BorderStyle = BorderStyle.None;
-        _checkedList.Font = new Font("Segoe UI", 10F);
-        _checkedList.IntegralHeight = false;
-        _checkedList.BackColor = Color.White;
-        _checkedList.ForeColor = Ink;
-        foreach (var pkg in _packages)
-        {
-            _checkedList.Items.Add(pkg.DisplayLabel);
-        }
+        _toolsScroll.Dock = DockStyle.Fill;
+        _toolsScroll.AutoScroll = true;
+        _toolsScroll.BackColor = Color.FromArgb(0xFA, 0xFC, 0xFB);
+        _toolsScroll.Padding = new Padding(4, 2, 4, 8);
+        _toolsScroll.BorderStyle = BorderStyle.None;
+        _toolsScroll.Resize += (_, _) => SyncToolsContentWidth();
 
         var actions = new FlowLayoutPanel
         {
@@ -311,7 +290,7 @@ public sealed class MainForm : Form
         actions.Controls.Add(_btnDefaults);
 
         inner.Controls.Add(head, 0, 0);
-        inner.Controls.Add(_checkedList, 0, 1);
+        inner.Controls.Add(_toolsScroll, 0, 1);
         inner.Controls.Add(actions, 0, 2);
         card.Controls.Add(inner);
         return card;
@@ -432,20 +411,157 @@ public sealed class MainForm : Form
         button.FlatAppearance.MouseDownBackColor = Line;
     }
 
-    private void UpdateSelectionCount()
+    private void RebuildToolsGrid(
+        IReadOnlyList<PackageEntry> selectedFirst,
+        IReadOnlyList<PackageEntry> others,
+        ISet<string> checkedKeys)
     {
-        var count = 0;
-        for (var i = 0; i < _checkedList.Items.Count; i++)
+        _toolsScroll.SuspendLayout();
+        _toolsScroll.Controls.Clear();
+        _toolRows.Clear();
+
+        var content = new TableLayoutPanel
         {
-            if (_checkedList.GetItemChecked(i))
-            {
-                count++;
-            }
+            ColumnCount = 1,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Dock = DockStyle.Top,
+            BackColor = Color.FromArgb(0xFA, 0xFC, 0xFB),
+            Padding = new Padding(8, 6, 20, 6)
+        };
+        content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+        var row = 0;
+        if (selectedFirst.Count > 0)
+        {
+            content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            content.Controls.Add(
+                BuildSectionLabel($"Dans ce profil · {selectedFirst.Count}", Moss, Foam),
+                0,
+                row++);
+            content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            content.Controls.Add(BuildPackageColumns(selectedFirst, checkedKeys, highlight: true), 0, row++);
         }
 
+        if (others.Count > 0)
+        {
+            content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            content.Controls.Add(
+                BuildSectionLabel($"Autres outils · {others.Count}", Muted, Color.Transparent),
+                0,
+                row++);
+            content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            content.Controls.Add(BuildPackageColumns(others, checkedKeys, highlight: false), 0, row++);
+        }
+
+        _toolsScroll.Controls.Add(content);
+        SyncToolsContentWidth();
+        _toolsScroll.ResumeLayout(true);
+    }
+
+    private void SyncToolsContentWidth()
+    {
+        if (_toolsScroll.Controls.Count == 0)
+        {
+            return;
+        }
+
+        var content = _toolsScroll.Controls[0];
+        var gutter = SystemInformation.VerticalScrollBarWidth + 8;
+        var width = Math.Max(280, _toolsScroll.ClientSize.Width - gutter);
+        content.Width = width;
+    }
+
+    private static Label BuildSectionLabel(string text, Color fore, Color back)
+    {
+        return new Label
+        {
+            Text = text,
+            Font = new Font("Segoe UI Semibold", 8.5F),
+            ForeColor = fore,
+            BackColor = back,
+            AutoSize = true,
+            Padding = new Padding(8, 4, 8, 4),
+            Margin = new Padding(0, 6, 0, 8)
+        };
+    }
+
+    private Control BuildPackageColumns(
+        IReadOnlyList<PackageEntry> packages,
+        ISet<string> checkedKeys,
+        bool highlight)
+    {
+        var grid = new TableLayoutPanel
+        {
+            ColumnCount = 2,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            Dock = DockStyle.Top,
+            BackColor = highlight ? Foam : Color.Transparent,
+            Padding = new Padding(highlight ? 8 : 0, highlight ? 8 : 0, highlight ? 8 : 0, highlight ? 8 : 0),
+            Margin = new Padding(0, 0, 0, 4)
+        };
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+
+        var rows = (packages.Count + 1) / 2;
+        for (var r = 0; r < rows; r++)
+        {
+            grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
+        }
+
+        for (var i = 0; i < packages.Count; i++)
+        {
+            var pkg = packages[i];
+            var box = new CheckBox
+            {
+                Text = pkg.DisplayLabel,
+                Checked = checkedKeys.Contains(pkg.Key),
+                AutoSize = false,
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI", 9.5F),
+                ForeColor = Ink,
+                BackColor = Color.Transparent,
+                Margin = new Padding(4, 2, 8, 2),
+                Padding = new Padding(2, 0, 0, 0),
+                Cursor = Cursors.Hand,
+                Tag = pkg
+            };
+            box.CheckedChanged += ToolCheckChanged;
+            _toolRows.Add((pkg, box));
+            grid.Controls.Add(box, i % 2, i / 2);
+        }
+
+        return grid;
+    }
+
+    private void ToolCheckChanged(object? sender, EventArgs e)
+    {
+        if (_suppressCheckEvents)
+        {
+            return;
+        }
+
+        UpdateSelectionCount();
+    }
+
+    private void UpdateSelectionCount()
+    {
+        var count = _toolRows.Count(r => r.Box.Checked);
+        var total = _packages.Count;
         _selectionCount.Text = count == 0
             ? "aucune selection"
-            : $"{count} selectionne(s) / {_packages.Count}";
+            : $"{count} selectionne(s) / {total}";
+
+        // Keep badge tucked after the title once preferred width is known.
+        if (_selectionCount.Parent is Control head)
+        {
+            var title = head.Controls.OfType<Label>().FirstOrDefault(l => l != _selectionCount);
+            if (title is not null)
+            {
+                _selectionCount.Location = new Point(title.Right + 12, 6);
+            }
+        }
     }
 
     private void SelectInitialProfile()
@@ -461,11 +577,10 @@ public sealed class MainForm : Form
             string.Equals(p.Key, "base", StringComparison.OrdinalIgnoreCase));
         if (baseProfile is null)
         {
-            for (var i = 0; i < _packages.Count; i++)
-            {
-                _checkedList.SetItemChecked(i, _packages[i].Default);
-            }
-
+            var defaults = _packages.Where(p => p.Default).ToList();
+            var rest = _packages.Where(p => !p.Default).ToList();
+            var keys = new HashSet<string>(defaults.Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
+            RebuildToolsGrid(defaults, rest, keys);
             UpdateSelectionCount();
             return;
         }
@@ -487,10 +602,11 @@ public sealed class MainForm : Form
             profile.Packages.Where(k => !string.IsNullOrWhiteSpace(k)),
             StringComparer.OrdinalIgnoreCase);
 
-        for (var i = 0; i < _packages.Count; i++)
-        {
-            _checkedList.SetItemChecked(i, wanted.Contains(_packages[i].Key));
-        }
+        // Preserve catalog relative order within each group.
+        var selected = _packages.Where(p => wanted.Contains(p.Key)).ToList();
+        var others = _packages.Where(p => !wanted.Contains(p.Key)).ToList();
+
+        RebuildToolsGrid(selected, others, wanted);
 
         _profileHint.Text = string.IsNullOrWhiteSpace(profile.Description)
             ? $"{wanted.Count} outil(s) pour ce profil"
@@ -500,22 +616,28 @@ public sealed class MainForm : Form
 
     private void SetAll(bool value)
     {
-        for (var i = 0; i < _checkedList.Items.Count; i++)
+        _suppressCheckEvents = true;
+        try
         {
-            _checkedList.SetItemChecked(i, value);
+            foreach (var row in _toolRows)
+            {
+                row.Box.Checked = value;
+            }
         }
+        finally
+        {
+            _suppressCheckEvents = false;
+        }
+    }
+
+    private List<PackageEntry> GetSelectedPackages()
+    {
+        return _toolRows.Where(r => r.Box.Checked).Select(r => r.Package).ToList();
     }
 
     private async Task InstallSelectedAsync()
     {
-        var selected = new List<PackageEntry>();
-        for (var i = 0; i < _checkedList.Items.Count; i++)
-        {
-            if (_checkedList.GetItemChecked(i))
-            {
-                selected.Add(_packages[i]);
-            }
-        }
+        var selected = GetSelectedPackages();
 
         if (selected.Count == 0)
         {
@@ -615,7 +737,12 @@ public sealed class MainForm : Form
         _btnNone.Enabled = !busy;
         _btnDefaults.Enabled = !busy;
         _profileCombo.Enabled = !busy;
-        _checkedList.Enabled = !busy;
+        _toolsScroll.Enabled = !busy;
+        foreach (var row in _toolRows)
+        {
+            row.Box.Enabled = !busy;
+        }
+
         _btnInstall.Text = busy ? "Installation..." : "Installer";
         Cursor = busy ? Cursors.WaitCursor : Cursors.Default;
     }
