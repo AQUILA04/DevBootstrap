@@ -85,6 +85,7 @@ public sealed class MainForm : Form
 
         SelectInitialProfile();
         UpdateSelectionCount();
+        Shown += (_, _) => SyncToolsContentWidth();
     }
 
     private Control BuildHeader()
@@ -408,41 +409,31 @@ public sealed class MainForm : Form
         _toolsScroll.Controls.Clear();
         _toolRows.Clear();
 
-        var content = new TableLayoutPanel
+        // Top-down stack: each package flow AutoSizes so the outer panel can scroll.
+        var stack = new FlowLayoutPanel
         {
-            ColumnCount = 1,
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             Location = Point.Empty,
             BackColor = Color.FromArgb(0xFA, 0xFC, 0xFB),
             Padding = new Padding(8, 6, 12, 6)
         };
-        content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 
-        var row = 0;
         if (selectedFirst.Count > 0)
         {
-            content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            content.Controls.Add(
-                BuildSectionLabel($"Dans ce profil · {selectedFirst.Count}", Moss, Foam),
-                0,
-                row++);
-            content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            content.Controls.Add(BuildPackageColumns(selectedFirst, checkedKeys, highlight: true), 0, row++);
+            stack.Controls.Add(BuildSectionLabel($"Dans ce profil · {selectedFirst.Count}", Moss, Foam));
+            stack.Controls.Add(BuildPackageColumns(selectedFirst, checkedKeys, highlight: true));
         }
 
         if (others.Count > 0)
         {
-            content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            content.Controls.Add(
-                BuildSectionLabel($"Autres outils · {others.Count}", Muted, Color.Transparent),
-                0,
-                row++);
-            content.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            content.Controls.Add(BuildPackageColumns(others, checkedKeys, highlight: false), 0, row++);
+            stack.Controls.Add(BuildSectionLabel($"Autres outils · {others.Count}", Muted, Color.Transparent));
+            stack.Controls.Add(BuildPackageColumns(others, checkedKeys, highlight: false));
         }
 
-        _toolsScroll.Controls.Add(content);
+        _toolsScroll.Controls.Add(stack);
         SyncToolsContentWidth();
         _toolsScroll.ResumeLayout(true);
     }
@@ -454,34 +445,57 @@ public sealed class MainForm : Form
             return;
         }
 
-        var content = _toolsScroll.Controls[0];
-        // Keep enough width so each of the two columns can show full tool names.
-        var width = Math.Max(720, _toolsScroll.ClientSize.Width - 8);
-        content.Width = width;
+        var stack = (FlowLayoutPanel)_toolsScroll.Controls[0];
+        var scrollGutter = SystemInformation.VerticalScrollBarWidth + 12;
+        var width = Math.Max(720, _toolsScroll.ClientSize.Width - scrollGutter);
 
-        foreach (Control section in content.Controls)
+        stack.SuspendLayout();
+        stack.Width = width;
+        stack.MaximumSize = new Size(width, 0);
+        stack.MinimumSize = new Size(width, 0);
+
+        var inner = Math.Max(680, width - stack.Padding.Horizontal);
+        foreach (Control section in stack.Controls)
         {
+            if (section is Label label)
+            {
+                label.Width = inner;
+                continue;
+            }
+
             if (section is not FlowLayoutPanel flow)
             {
                 continue;
             }
 
-            flow.Width = Math.Max(680, width - 24);
-            var colWidth = Math.Max(320, (flow.ClientSize.Width - flow.Padding.Horizontal - 12) / 2);
+            flow.SuspendLayout();
+            flow.MaximumSize = new Size(inner, 0);
+            flow.MinimumSize = new Size(inner, 0);
+            flow.Width = inner;
+
+            var usable = inner - flow.Padding.Horizontal - 8;
+            var colWidth = Math.Max(300, (usable / 2) - 8);
             var count = 0;
             foreach (Control child in flow.Controls)
             {
                 if (child is CheckBox box)
                 {
                     box.Width = colWidth;
-                    box.Height = 38;
+                    box.Height = 36;
                     count++;
                 }
             }
 
+            flow.ResumeLayout(true);
             var rows = Math.Max(1, (count + 1) / 2);
-            flow.Height = rows * 42 + flow.Padding.Vertical + 4;
+            flow.Height = Math.Max(
+                flow.PreferredSize.Height,
+                rows * 42 + flow.Padding.Vertical);
         }
+
+        stack.ResumeLayout(true);
+        stack.Height = stack.PreferredSize.Height;
+        _toolsScroll.AutoScrollMinSize = new Size(0, stack.Height + 16);
     }
 
     private static Label BuildSectionLabel(string text, Color fore, Color back)
@@ -492,9 +506,11 @@ public sealed class MainForm : Form
             Font = new Font("Segoe UI Semibold", 8.5F),
             ForeColor = fore,
             BackColor = back == Color.Transparent ? Color.FromArgb(0xFA, 0xFC, 0xFB) : back,
-            AutoSize = true,
+            AutoSize = false,
+            Size = new Size(680, 28),
+            TextAlign = ContentAlignment.MiddleLeft,
             Padding = new Padding(8, 4, 8, 4),
-            Margin = new Padding(0, 8, 0, 6)
+            Margin = new Padding(0, 8, 0, 4)
         };
     }
 
@@ -509,8 +525,8 @@ public sealed class MainForm : Form
             WrapContents = true,
             FlowDirection = FlowDirection.LeftToRight,
             BackColor = highlight ? Foam : Color.FromArgb(0xFA, 0xFC, 0xFB),
-            Padding = new Padding(highlight ? 10 : 4, highlight ? 10 : 4, highlight ? 10 : 4, highlight ? 10 : 4),
-            Margin = new Padding(0, 0, 0, 6)
+            Padding = new Padding(highlight ? 10 : 6, 10, highlight ? 10 : 6, 10),
+            Margin = new Padding(0, 0, 0, 8)
         };
 
         foreach (var pkg in packages)
@@ -520,11 +536,11 @@ public sealed class MainForm : Form
                 Text = pkg.DisplayLabel,
                 Checked = checkedKeys.Contains(pkg.Key),
                 AutoSize = false,
-                Size = new Size(340, 38),
+                Size = new Size(340, 36),
                 Font = new Font("Segoe UI", 9.75F),
                 ForeColor = Ink,
                 BackColor = Color.Transparent,
-                Margin = new Padding(4, 2, 4, 2),
+                Margin = new Padding(4, 3, 4, 3),
                 Padding = new Padding(4, 0, 4, 0),
                 Cursor = Cursors.Hand,
                 AutoEllipsis = true,
@@ -537,9 +553,8 @@ public sealed class MainForm : Form
             flow.Controls.Add(box);
         }
 
-        // Approximate height: 2 columns → ceil(n/2) rows.
         var rows = Math.Max(1, (packages.Count + 1) / 2);
-        flow.Height = rows * 42 + flow.Padding.Vertical + 4;
+        flow.Height = rows * 42 + flow.Padding.Vertical;
         return flow;
     }
 
