@@ -107,7 +107,7 @@ public sealed class MainForm : Form
 
         var tagline = new Label
         {
-            Text = "Pack outils de developpement — profils metier, checklist, winget.",
+            Text = "Choisis un profil metier, ajuste la checklist, puis clique Installer.",
             Font = new Font("Segoe UI", 9.5F),
             ForeColor = Color.FromArgb(0xA8, 0xCB, 0xBE),
             AutoSize = true,
@@ -137,18 +137,18 @@ public sealed class MainForm : Form
 
         var label = new Label
         {
-            Text = "PROFIL",
-            Font = new Font("Segoe UI Semibold", 8F),
+            Text = "Choisir un profil",
+            Font = new Font("Segoe UI Semibold", 9F),
             ForeColor = Moss,
             AutoSize = true,
-            Location = new Point(28, 14)
+            Location = new Point(28, 12)
         };
 
         _profileCombo.DropDownStyle = ComboBoxStyle.DropDownList;
-        _profileCombo.FlatStyle = FlatStyle.Flat;
-        _profileCombo.Font = new Font("Segoe UI Semibold", 10F);
-        _profileCombo.Size = new Size(260, 32);
-        _profileCombo.Location = new Point(28, 36);
+        _profileCombo.FlatStyle = FlatStyle.Standard;
+        _profileCombo.Font = new Font("Segoe UI Semibold", 11F);
+        _profileCombo.Size = new Size(300, 34);
+        _profileCombo.Location = new Point(28, 34);
         _profileCombo.DisplayMember = nameof(ProfileEntry.Name);
         foreach (var profile in _profiles)
         {
@@ -165,7 +165,7 @@ public sealed class MainForm : Form
 
         _profileHint.Font = new Font("Segoe UI", 9F);
         _profileHint.ForeColor = Muted;
-        _profileHint.Location = new Point(304, 40);
+        _profileHint.Location = new Point(344, 38);
         _profileHint.Size = new Size(360, 28);
 
         _adminLabel.Font = new Font("Segoe UI Semibold", 8.5F);
@@ -189,9 +189,9 @@ public sealed class MainForm : Form
 
         void LayoutBar()
         {
-            _profileHint.Width = Math.Max(160, bar.ClientSize.Width - 540);
+            _profileHint.Width = Math.Max(160, bar.ClientSize.Width - 580);
             _adminLabel.Location = new Point(
-                Math.Max(320, bar.ClientSize.Width - _adminLabel.PreferredWidth - 28),
+                Math.Max(360, bar.ClientSize.Width - _adminLabel.PreferredWidth - 28),
                 16);
         }
 
