@@ -81,8 +81,8 @@ Sur push / PR / tag `v*` :
 3. Tag `v*` → GitHub Release avec le zip
 
 ```bat
-git tag v1.2.0
-git push origin v1.2.0
+git tag v1.2.1
+git push origin v1.2.1
 ```
 
 ## Site web (landing)
