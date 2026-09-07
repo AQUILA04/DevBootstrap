@@ -76,9 +76,28 @@ public sealed class MainForm : Form
         root.Controls.Add(BuildFooter(), 0, 3);
         Controls.Add(root);
 
-        _checkedList.ItemCheck += (_, _) => BeginInvoke(UpdateSelectionCount);
+        // ItemCheck fires before the checked state flips; defer the count refresh.
+        // Guard IsHandleCreated: SelectInitialProfile runs during construction and
+        // must not BeginInvoke before the form handle exists.
+        _checkedList.ItemCheck += (_, _) => ScheduleSelectionCountUpdate();
         SelectInitialProfile();
         UpdateSelectionCount();
+    }
+
+    private void ScheduleSelectionCountUpdate()
+    {
+        if (IsDisposed)
+        {
+            return;
+        }
+
+        if (IsHandleCreated)
+        {
+            BeginInvoke(UpdateSelectionCount);
+            return;
+        }
+
+        // During construction, ApplyProfile/UpdateSelectionCount already refresh the label.
     }
 
     private Control BuildHeader()
@@ -515,11 +534,11 @@ public sealed class MainForm : Form
                 return;
             }
 
-            if (InvokeRequired)
+            if (InvokeRequired && IsHandleCreated)
             {
                 BeginInvoke(() => AppendLog(line));
             }
-            else
+            else if (!IsDisposed)
             {
                 AppendLog(line);
             }
