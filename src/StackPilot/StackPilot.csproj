@@ -9,7 +9,7 @@
     <ApplicationIcon />
     <RootNamespace>StackPilot</RootNamespace>
     <AssemblyName>StackPilot</AssemblyName>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Product>StackPilot</Product>
     <Company>OptimizeSolux</Company>
     <Description>Installateur du pack outils de developpement</Description>

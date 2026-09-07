@@ -51,14 +51,15 @@ if ($LASTEXITCODE -ne 0) {
 Copy-Item -LiteralPath (Join-Path $root "catalog.json") -Destination (Join-Path $outDir "catalog.json") -Force
 
 $readmeUser = @"
-StackPilot
-==========
+StackPilot v1.2.0
+=================
 
 1. Double-clic sur StackPilot.exe
    Windows demandera l'elevation UAC (compte administrateur).
-2. Coche les outils a installer
-3. Clique Installer
-4. Attends la fin (WSL/Docker peuvent demander un redemarrage)
+2. Choisis un profil (Base, Frontend, Backend, Fullstack, DevOps, Mobile, UX/UI)
+3. Ajuste la checklist si besoin
+4. Clique Installer
+5. Attends la fin (WSL/Docker/Flutter peuvent demander un redemarrage ou un nouveau terminal)
 
 Prerequis: Windows 10/11 avec winget (App Installer / Microsoft Store).
 
