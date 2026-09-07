@@ -22,16 +22,18 @@ public sealed class MainForm : Form
     private readonly List<ProfileEntry> _profiles;
     private readonly ComboBox _profileCombo = new();
     private readonly TextBox _logBox = new();
-    private readonly Button _btnInstall = new();
-    private readonly Button _btnAll = new();
-    private readonly Button _btnNone = new();
-    private readonly Button _btnDefaults = new();
-    private readonly Button _btnClose = new();
+    private readonly SoftButton _btnInstall = new();
+    private readonly SoftButton _btnAll = new();
+    private readonly SoftButton _btnNone = new();
+    private readonly SoftButton _btnDefaults = new();
+    private readonly SoftButton _btnClose = new();
     private readonly Label _adminLabel = new();
     private readonly Label _profileHint = new();
     private readonly Label _selectionCount = new();
     private readonly Panel _toolsScroll = new();
+    private readonly ToolTip _toolTip = new();
     private readonly List<(PackageEntry Package, CheckBox Box)> _toolRows = new();
+    private SoftComboHost? _profileComboHost;
     private CancellationTokenSource? _cts;
     private bool _suppressCheckEvents;
 
@@ -53,12 +55,15 @@ public sealed class MainForm : Form
 
         Text = "StackPilot";
         StartPosition = FormStartPosition.CenterScreen;
-        MinimumSize = new Size(900, 680);
-        Size = new Size(1000, 760);
+        MinimumSize = new Size(1080, 720);
+        Size = new Size(1180, 800);
         Font = new Font("Segoe UI", 9.5F);
         BackColor = Mist;
         ForeColor = Ink;
         DoubleBuffered = true;
+
+        _toolTip.ShowAlways = true;
+        _toolTip.AutoPopDelay = 8000;
 
         var root = new TableLayoutPanel
         {
@@ -68,7 +73,7 @@ public sealed class MainForm : Form
             BackColor = Mist
         };
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 96));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 84));
+        root.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         root.RowStyles.Add(new RowStyle(SizeType.Absolute, 74));
 
@@ -146,10 +151,6 @@ public sealed class MainForm : Form
         };
 
         _profileCombo.DropDownStyle = ComboBoxStyle.DropDownList;
-        _profileCombo.FlatStyle = FlatStyle.Standard;
-        _profileCombo.Font = new Font("Segoe UI Semibold", 11F);
-        _profileCombo.Size = new Size(300, 34);
-        _profileCombo.Location = new Point(28, 34);
         _profileCombo.DisplayMember = nameof(ProfileEntry.Name);
         foreach (var profile in _profiles)
         {
@@ -164,9 +165,15 @@ public sealed class MainForm : Form
             }
         };
 
+        _profileComboHost = new SoftComboHost(_profileCombo)
+        {
+            Location = new Point(28, 34),
+            Size = new Size(340, 40)
+        };
+
         _profileHint.Font = new Font("Segoe UI", 9F);
         _profileHint.ForeColor = Muted;
-        _profileHint.Location = new Point(344, 38);
+        _profileHint.Location = new Point(388, 42);
         _profileHint.Size = new Size(360, 28);
 
         _adminLabel.Font = new Font("Segoe UI Semibold", 8.5F);
@@ -183,16 +190,16 @@ public sealed class MainForm : Form
         }
 
         bar.Controls.Add(label);
-        bar.Controls.Add(_profileCombo);
+        bar.Controls.Add(_profileComboHost);
         bar.Controls.Add(_profileHint);
         bar.Controls.Add(_adminLabel);
         bar.Controls.Add(bottomLine);
 
         void LayoutBar()
         {
-            _profileHint.Width = Math.Max(160, bar.ClientSize.Width - 580);
+            _profileHint.Width = Math.Max(160, bar.ClientSize.Width - 620);
             _adminLabel.Location = new Point(
-                Math.Max(360, bar.ClientSize.Width - _adminLabel.PreferredWidth - 28),
+                Math.Max(400, bar.ClientSize.Width - _adminLabel.PreferredWidth - 28),
                 16);
         }
 
@@ -279,9 +286,9 @@ public sealed class MainForm : Form
             BackColor = Color.White
         };
 
-        StyleSecondaryButton(_btnAll, "Tout cocher", 118);
-        StyleSecondaryButton(_btnNone, "Tout decocher", 124);
-        StyleSecondaryButton(_btnDefaults, "Profil Base", 110);
+        StyleSoftButton(_btnAll, "Tout cocher", SoftButtonKind.Secondary, 128);
+        StyleSoftButton(_btnNone, "Tout decocher", SoftButtonKind.Ghost, 134);
+        StyleSoftButton(_btnDefaults, "Profil Base", SoftButtonKind.Secondary, 120);
         _btnAll.Click += (_, _) => { SetAll(true); UpdateSelectionCount(); };
         _btnNone.Click += (_, _) => { SetAll(false); UpdateSelectionCount(); };
         _btnDefaults.Click += (_, _) => ApplyBaseProfile();
@@ -355,16 +362,16 @@ public sealed class MainForm : Form
             BackColor = Line
         };
 
-        StyleSecondaryButton(_btnClose, "Fermer", 110);
-        _btnClose.Height = 38;
+        StyleSoftButton(_btnClose, "Fermer", SoftButtonKind.Ghost, 110);
+        _btnClose.Height = 40;
         _btnClose.Click += (_, _) =>
         {
             _cts?.Cancel();
             Close();
         };
 
-        StylePrimaryButton(_btnInstall, "Installer");
-        _btnInstall.Size = new Size(150, 38);
+        StyleSoftButton(_btnInstall, "Installer", SoftButtonKind.Primary, 150);
+        _btnInstall.Height = 40;
         _btnInstall.Click += async (_, _) => await InstallSelectedAsync().ConfigureAwait(true);
 
         footer.Controls.Add(topLine);
@@ -382,33 +389,14 @@ public sealed class MainForm : Form
         return footer;
     }
 
-    private static void StylePrimaryButton(Button button, string text)
+    private static void StyleSoftButton(SoftButton button, string text, SoftButtonKind kind, int width)
     {
         button.Text = text;
-        button.FlatStyle = FlatStyle.Flat;
-        button.FlatAppearance.BorderSize = 0;
-        button.BackColor = Mint;
-        button.ForeColor = Color.White;
-        button.Font = new Font("Segoe UI Semibold", 10F);
-        button.Cursor = Cursors.Hand;
-        button.FlatAppearance.MouseOverBackColor = Moss;
-        button.FlatAppearance.MouseDownBackColor = PineMid;
-    }
-
-    private static void StyleSecondaryButton(Button button, string text, int width)
-    {
-        button.Text = text;
-        button.FlatStyle = FlatStyle.Flat;
-        button.FlatAppearance.BorderColor = Line;
-        button.FlatAppearance.BorderSize = 1;
-        button.BackColor = Color.White;
-        button.ForeColor = Ink;
-        button.Font = new Font("Segoe UI Semibold", 9F);
-        button.Cursor = Cursors.Hand;
-        button.Size = new Size(width, 32);
-        button.Margin = new Padding(0, 0, 8, 0);
-        button.FlatAppearance.MouseOverBackColor = Foam;
-        button.FlatAppearance.MouseDownBackColor = Line;
+        button.Kind = kind;
+        button.Size = new Size(width, kind == SoftButtonKind.Primary ? 40 : 34);
+        button.Font = new Font("Segoe UI Semibold", kind == SoftButtonKind.Primary ? 10F : 9.25F);
+        button.Margin = new Padding(0, 0, 10, 0);
+        button.CornerRadius = 10;
     }
 
     private void RebuildToolsGrid(
@@ -467,9 +455,33 @@ public sealed class MainForm : Form
         }
 
         var content = _toolsScroll.Controls[0];
-        var gutter = SystemInformation.VerticalScrollBarWidth + 8;
-        var width = Math.Max(280, _toolsScroll.ClientSize.Width - gutter);
+        // Keep enough width so each of the two columns can show full tool names.
+        var width = Math.Max(720, _toolsScroll.ClientSize.Width - 8);
         content.Width = width;
+
+        foreach (Control section in content.Controls)
+        {
+            if (section is not FlowLayoutPanel flow)
+            {
+                continue;
+            }
+
+            flow.Width = Math.Max(680, width - 24);
+            var colWidth = Math.Max(320, (flow.ClientSize.Width - flow.Padding.Horizontal - 12) / 2);
+            var count = 0;
+            foreach (Control child in flow.Controls)
+            {
+                if (child is CheckBox box)
+                {
+                    box.Width = colWidth;
+                    box.Height = 38;
+                    count++;
+                }
+            }
+
+            var rows = Math.Max(1, (count + 1) / 2);
+            flow.Height = rows * 42 + flow.Padding.Vertical + 4;
+        }
     }
 
     private static Label BuildSectionLabel(string text, Color fore, Color back)
@@ -479,10 +491,10 @@ public sealed class MainForm : Form
             Text = text,
             Font = new Font("Segoe UI Semibold", 8.5F),
             ForeColor = fore,
-            BackColor = back,
+            BackColor = back == Color.Transparent ? Color.FromArgb(0xFA, 0xFC, 0xFB) : back,
             AutoSize = true,
             Padding = new Padding(8, 4, 8, 4),
-            Margin = new Padding(0, 6, 0, 8)
+            Margin = new Padding(0, 8, 0, 6)
         };
     }
 
@@ -491,48 +503,44 @@ public sealed class MainForm : Form
         ISet<string> checkedKeys,
         bool highlight)
     {
-        var grid = new TableLayoutPanel
+        var flow = new FlowLayoutPanel
         {
-            ColumnCount = 2,
-            AutoSize = true,
-            AutoSizeMode = AutoSizeMode.GrowAndShrink,
-            Dock = DockStyle.Fill,
-            BackColor = highlight ? Foam : Color.Transparent,
-            Padding = new Padding(highlight ? 8 : 0, highlight ? 8 : 0, highlight ? 8 : 0, highlight ? 8 : 0),
-            Margin = new Padding(0, 0, 0, 4)
+            AutoSize = false,
+            WrapContents = true,
+            FlowDirection = FlowDirection.LeftToRight,
+            BackColor = highlight ? Foam : Color.FromArgb(0xFA, 0xFC, 0xFB),
+            Padding = new Padding(highlight ? 10 : 4, highlight ? 10 : 4, highlight ? 10 : 4, highlight ? 10 : 4),
+            Margin = new Padding(0, 0, 0, 6)
         };
-        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-        grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
 
-        var rows = (packages.Count + 1) / 2;
-        for (var r = 0; r < rows; r++)
+        foreach (var pkg in packages)
         {
-            grid.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
-        }
-
-        for (var i = 0; i < packages.Count; i++)
-        {
-            var pkg = packages[i];
             var box = new CheckBox
             {
                 Text = pkg.DisplayLabel,
                 Checked = checkedKeys.Contains(pkg.Key),
                 AutoSize = false,
-                Dock = DockStyle.Fill,
-                Font = new Font("Segoe UI", 9.5F),
+                Size = new Size(340, 38),
+                Font = new Font("Segoe UI", 9.75F),
                 ForeColor = Ink,
                 BackColor = Color.Transparent,
-                Margin = new Padding(4, 2, 8, 2),
-                Padding = new Padding(2, 0, 0, 0),
+                Margin = new Padding(4, 2, 4, 2),
+                Padding = new Padding(4, 0, 4, 0),
                 Cursor = Cursors.Hand,
+                AutoEllipsis = true,
+                UseMnemonic = false,
                 Tag = pkg
             };
+            _toolTip.SetToolTip(box, pkg.DisplayLabel);
             box.CheckedChanged += ToolCheckChanged;
             _toolRows.Add((pkg, box));
-            grid.Controls.Add(box, i % 2, i / 2);
+            flow.Controls.Add(box);
         }
 
-        return grid;
+        // Approximate height: 2 columns → ceil(n/2) rows.
+        var rows = Math.Max(1, (packages.Count + 1) / 2);
+        flow.Height = rows * 42 + flow.Padding.Vertical + 4;
+        return flow;
     }
 
     private void ToolCheckChanged(object? sender, EventArgs e)

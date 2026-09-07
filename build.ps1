@@ -51,7 +51,7 @@ if ($LASTEXITCODE -ne 0) {
 Copy-Item -LiteralPath (Join-Path $root "catalog.json") -Destination (Join-Path $outDir "catalog.json") -Force
 
 $readmeUser = @"
-StackPilot v1.2.2
+StackPilot v1.2.3
 =================
 
 1. Double-clic sur StackPilot.exe
