@@ -11,11 +11,10 @@
     <Cultures>en-US</Cultures>
     <SuppressIces>ICE57;ICE91</SuppressIces>
     <StackPilotPublishDir Condition="'$(StackPilotPublishDir)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\dist\StackPilot'))</StackPilotPublishDir>
-    <DefineConstants>ProductVersion=$(ProductVersion);MsiUpgradeCode=$(MsiUpgradeCode)</DefineConstants>
+    <StackPilotIconsDir Condition="'$(StackPilotIconsDir)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\assets\icons'))</StackPilotIconsDir>
+    <!-- Normalize to forward-slash paths with trailing slash for WiX preprocessor vars. -->
+    <_PublishDir>$([System.IO.Path]::GetFullPath('$(StackPilotPublishDir)').Replace('\','/').TrimEnd('/'))/</_PublishDir>
+    <_IconsDir>$([System.IO.Path]::GetFullPath('$(StackPilotIconsDir)').Replace('\','/').TrimEnd('/'))/</_IconsDir>
+    <DefineConstants>ProductVersion=$(ProductVersion);MsiUpgradeCode=$(MsiUpgradeCode);PublishDir=$(_PublishDir);IconsDir=$(_IconsDir)</DefineConstants>
   </PropertyGroup>
-
-  <ItemGroup>
-    <BindPath Include="$(StackPilotPublishDir)" BindName="PublishDir" />
-    <BindPath Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\assets\icons'))" BindName="Icons" />
-  </ItemGroup>
 </Project>

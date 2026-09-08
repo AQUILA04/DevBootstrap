@@ -4,7 +4,7 @@
     StackPilot MSI package (no WixUI — Store requires silent install).
     Silent install:   msiexec /i StackPilot-VERSION-x64.msi /qn /norestart ALLUSERS=1
     Silent uninstall: msiexec /x StackPilot-VERSION-x64.msi /qn /norestart
-    Version/UpgradeCode come from Directory.Build.props via DefineConstants.
+    Version/UpgradeCode/PublishDir/IconsDir come from the wixproj DefineConstants.
   -->
   <Package Name="StackPilot"
            Manufacturer="OptimizeSolux"
@@ -22,7 +22,7 @@
 
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
 
-    <Icon Id="AppIcon" SourceFile="!(bindpath.Icons)StackPilot.ico" />
+    <Icon Id="AppIcon" SourceFile="$(var.IconsDir)StackPilot.ico" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon" />
     <Property Id="ARPHELPLINK" Value="https://stackpilot.optimizesolux.com" />
     <Property Id="ARPURLINFOABOUT" Value="https://stackpilot.optimizesolux.com" />
@@ -49,13 +49,15 @@
     <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
       <Component Id="StackPilotExe" Guid="0815824A-286E-4C4E-9D8E-C963F6C19FA3" Bitness="always64">
         <File Id="StackPilotExe"
-              Source="!(bindpath.PublishDir)StackPilot.exe"
+              Name="StackPilot.exe"
+              Source="$(var.PublishDir)StackPilot.exe"
               KeyPath="yes"
               Checksum="yes" />
       </Component>
       <Component Id="CatalogJson" Guid="DD480BA2-1BF0-48A2-B89A-1C55874D3AD7" Bitness="always64">
         <File Id="CatalogJson"
-              Source="!(bindpath.PublishDir)catalog.json"
+              Name="catalog.json"
+              Source="$(var.PublishDir)catalog.json"
               KeyPath="yes" />
       </Component>
     </ComponentGroup>
