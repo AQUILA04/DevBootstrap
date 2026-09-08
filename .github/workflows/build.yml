@@ -2,10 +2,9 @@ name: Build StackPilot
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, cursor/fix-cloud-env]
     tags: ["v*"]
   pull_request:
-    branches: [main, master]
   workflow_dispatch:
 
 permissions:
