@@ -152,8 +152,17 @@ Confidentialite: $($script:PrivacyPolicyUrl)
     Set-Content -LiteralPath (Join-Path $script:ResolvedPublishDir "LIRE-MOI.txt") -Value $readmeUser -Encoding ASCII
 }
 
+function ConvertTo-MsbuildPath([string]$PathValue) {
+    # MSBuild treats a trailing \" as an escaped quote; use forward slashes and no trailing slash.
+    return (($PathValue -replace '\\', '/').TrimEnd('/')) + '/'
+}
+
 function Invoke-BuildMsi {
     param([Parameter(Mandatory = $true)]$Meta)
+
+    if ($env:OS -ne "Windows_NT") {
+        throw "Build MSI WiX requires Windows (current OS is not Windows)."
+    }
 
     $dotnet = Get-Command dotnet -ErrorAction SilentlyContinue
     if (-not $dotnet) {
@@ -174,15 +183,20 @@ function Invoke-BuildMsi {
     }
 
     $wixproj = Join-Path $root "src\StackPilot.Installer\StackPilot.Installer.wixproj"
+    $publishMsbuild = ConvertTo-MsbuildPath $script:ResolvedPublishDir
+    $msiOutMsbuild = ConvertTo-MsbuildPath $script:ResolvedMsiOutDir
     Write-Step "WiX MSI ($($Meta.Version)) depuis EXE publie..."
+    Write-Host "[build] PublishDir=$publishMsbuild"
+    Write-Host "[build] OutputPath=$msiOutMsbuild"
     & dotnet build $wixproj `
         -c Release `
-        -p:StackPilotPublishDir="$($script:ResolvedPublishDir.TrimEnd('\'))\" `
-        -p:ProductVersion=$($Meta.Version) `
-        -p:OutputPath="$($script:ResolvedMsiOutDir.TrimEnd('\'))\" `
-        -p:BaseOutputPath="$($script:ResolvedMsiOutDir.TrimEnd('\'))\"
+        -v minimal `
+        "-p:StackPilotPublishDir=$publishMsbuild" `
+        "-p:ProductVersion=$($Meta.Version)" `
+        "-p:OutputPath=$msiOutMsbuild" `
+        "-p:BaseOutputPath=$msiOutMsbuild"
     if ($LASTEXITCODE -ne 0) {
-        throw "Build MSI WiX a echoue (code $LASTEXITCODE). WiX 5 requiert Windows."
+        throw "Build MSI WiX a echoue (code $LASTEXITCODE)."
     }
 
     $msiName = "$OutputName-$($Meta.Version)-x64.msi"

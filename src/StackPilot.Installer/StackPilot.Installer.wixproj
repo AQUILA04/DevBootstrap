@@ -10,17 +10,16 @@
     <Cultures>en-US</Cultures>
     <SuppressIces>ICE91</SuppressIces>
     <!-- Default publish folder produced by build.ps1 -Phase PublishExe -->
-    <StackPilotPublishDir Condition="'$(StackPilotPublishDir)' == ''">$(MSBuildThisFileDirectory)..\..\dist\StackPilot\</StackPilotPublishDir>
-    <DefineConstants>ProductVersion=$(ProductVersion);Company=$(Company);ProductName=$(ProductName);MsiUpgradeCode=$(MsiUpgradeCode);PackageProjectUrl=$(PackageProjectUrl);PrivacyPolicyUrl=$(PrivacyPolicyUrl);SupportUrl=$(SupportUrl)</DefineConstants>
+    <StackPilotPublishDir Condition="'$(StackPilotPublishDir)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\dist\StackPilot'))</StackPilotPublishDir>
+    <DefineConstants>ProductVersion=$(ProductVersion);Company=$(Company);ProductName=$(ProductName);MsiUpgradeCode=$(MsiUpgradeCode);PackageProjectUrl=$(PackageProjectUrl);PrivacyPolicyUrl=$(PrivacyPolicyUrl)</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
     <BindPath Include="$(StackPilotPublishDir)" BindName="PublishDir" />
-    <BindPath Include="$(MSBuildThisFileDirectory)..\..\assets\icons\" BindName="Icons" />
+    <BindPath Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\assets\icons'))" BindName="Icons" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
-    <PackageReference Include="WixToolset.Util.wixext" Version="5.0.2" />
   </ItemGroup>
 </Project>
