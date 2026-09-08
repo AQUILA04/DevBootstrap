@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <StackPilotVersion>1.1.0</StackPilotVersion>
+    <Version>$(StackPilotVersion)</Version>
+    <AssemblyVersion>$(StackPilotVersion).0</AssemblyVersion>
+    <FileVersion>$(StackPilotVersion).0</FileVersion>
+    <InformationalVersion>$(StackPilotVersion)</InformationalVersion>
+    <Company>OptimizeSolux</Company>
+    <Product>StackPilot</Product>
+    <Copyright>Copyright © OptimizeSolux 2026</Copyright>
+  </PropertyGroup>
+</Project>

@@ -10,6 +10,7 @@ if exist "%~dp0StackPilot.exe" (
   exit /b 0
 )
 echo StackPilot.exe introuvable. Telecharge la release:
-echo https://github.com/AQUILA04/DevBootstrap/releases/latest/download/StackPilot.zip
+echo https://apps.microsoft.com/search?query=StackPilot
+start "" "https://apps.microsoft.com/search?query=StackPilot"
 pause
 endlocal

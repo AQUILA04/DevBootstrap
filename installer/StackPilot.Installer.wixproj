@@ -1,0 +1,11 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <PropertyGroup>
+    <OutputType>Package</OutputType>
+    <Platform>x64</Platform>
+    <OutputName>StackPilot-$(ProductVersion)-x64</OutputName>
+    <DefineConstants>
+      ProductVersion=$(ProductVersion);
+      PublishDir=$(PublishDir)
+    </DefineConstants>
+  </PropertyGroup>
+</Project>

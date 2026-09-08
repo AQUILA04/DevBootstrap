@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+    Name="StackPilot"
+    Manufacturer="OptimizeSolux"
+    Version="$(var.ProductVersion)"
+    UpgradeCode="0E607C55-3C7C-4AD8-A4C5-E91E07449F75"
+    Language="1036"
+    Codepage="1252"
+    Scope="perMachine"
+    Compressed="yes">
+
+    <SummaryInformation
+      Description="Installateur StackPilot"
+      Manufacturer="OptimizeSolux"
+      Keywords="StackPilot, developpement, winget" />
+
+    <MajorUpgrade
+      DowngradeErrorMessage="Une version plus récente de StackPilot est déjà installée." />
+    <MediaTemplate EmbedCab="yes" />
+    <Icon Id="StackPilotIcon.ico" SourceFile="..\src\StackPilot\assets\StackPilot.ico" />
+    <Property Id="ARPPRODUCTICON" Value="StackPilotIcon.ico" />
+
+    <StandardDirectory Id="ProgramFiles6432Folder">
+      <Directory Id="INSTALLFOLDER" Name="StackPilot">
+        <Component Id="ApplicationFiles" Guid="2D043613-B989-4E20-9994-F1A97F73336F">
+          <File
+            Id="StackPilotExecutable"
+            Source="$(var.PublishDir)\StackPilot.exe"
+            KeyPath="yes"
+            Checksum="yes" />
+          <File
+            Id="StackPilotCatalog"
+            Source="$(var.PublishDir)\catalog.json"
+            Checksum="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="StackPilot">
+        <Component Id="ApplicationShortcut" Guid="9F881257-EB99-4D66-B0AF-06567467B393">
+          <Shortcut
+            Id="ApplicationStartMenuShortcut"
+            Name="StackPilot"
+            Description="Préparer un poste de développement Windows"
+            Target="[INSTALLFOLDER]StackPilot.exe"
+            WorkingDirectory="INSTALLFOLDER" />
+          <RemoveFolder
+            Id="RemoveApplicationProgramsFolder"
+            Directory="ApplicationProgramsFolder"
+            On="uninstall" />
+          <RegistryValue
+            Root="HKLM"
+            Key="Software\OptimizeSolux\StackPilot"
+            Name="Installed"
+            Type="integer"
+            Value="1"
+            KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+
+    <Feature Id="MainFeature" Title="StackPilot" Level="1">
+      <ComponentRef Id="ApplicationFiles" />
+      <ComponentRef Id="ApplicationShortcut" />
+    </Feature>
+  </Package>
+</Wix>
