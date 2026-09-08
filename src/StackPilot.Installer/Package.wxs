@@ -74,11 +74,8 @@
                 WorkingDirectory="INSTALLFOLDER"
                 Icon="AppIcon" />
       <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
-<<<<<<< HEAD
-      <!-- HKCU KeyPath is required by ICE38/ICE43/ICE57 for Start Menu shortcuts,
-           even in a per-machine package. -->
-=======
->>>>>>> 69d24bc (Fix WiX ICE38/43/57 for Start Menu shortcut component.)
+      <!-- HKCU KeyPath is required by ICE38/ICE43 for Start Menu shortcuts,
+           even in a per-machine package. ICE57 may still fire; suppressed in wixproj. -->
       <RegistryValue Root="HKCU"
                      Key="Software\OptimizeSolux\StackPilot"
                      Name="Installed"
