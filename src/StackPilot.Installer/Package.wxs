@@ -28,8 +28,6 @@
     <Property Id="ARPURLINFOABOUT" Value="https://stackpilot.optimizesolux.com" />
     <Property Id="ARPURLUPDATEINFO" Value="https://stackpilot.optimizesolux.com/privacy.html" />
     <Property Id="ARPCOMMENTS" Value="Requires administrator rights. Installs development tools via winget/WSL/DISM." />
-    <Property Id="ALLUSERS" Value="1" Secure="yes" />
-    <Property Id="MSIINSTALLPERUSER" Value="0" Secure="yes" />
 
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="CompanyFolder" Name="OptimizeSolux">
