@@ -115,8 +115,10 @@ def main() -> int:
         "StartMenuShortcut",
         "ARPPRODUCTICON",
         "$(var.MsiUpgradeCode)",
-        "!(bindpath.PublishDir)StackPilot.exe",
-        "!(bindpath.PublishDir)catalog.json",
+        "$(var.PublishDir)StackPilot.exe",
+        "$(var.PublishDir)catalog.json",
+        'Name="StackPilot.exe"',
+        'Name="catalog.json"',
     ]:
         if needle not in wxs:
             bad(f"Package.wxs missing {needle}")
