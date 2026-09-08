@@ -7,8 +7,8 @@
     <OutputType>Package</OutputType>
     <OutputName>StackPilot-$(ProductVersion)-x64</OutputName>
     <InstallerPlatform>x64</InstallerPlatform>
-    <Cultures>;</Cultures>
-    <SuppressIces>ICE91</SuppressIces>
+    <Cultures>en-US</Cultures>
+    <SuppressIces>ICE57;ICE91</SuppressIces>
     <StackPilotPublishDir Condition="'$(StackPilotPublishDir)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\dist\StackPilot'))</StackPilotPublishDir>
     <DefineConstants>ProductVersion=$(ProductVersion);MsiUpgradeCode=$(MsiUpgradeCode)</DefineConstants>
   </PropertyGroup>
