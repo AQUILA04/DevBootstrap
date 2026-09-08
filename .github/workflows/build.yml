@@ -156,7 +156,7 @@ jobs:
         if: steps.meta.outputs.is_release == 'true'
         shell: pwsh
         run: |
-          $version = "${{ steps.meta.outputs.product_version }}"
+          $version = "${{ steps.meta.outputs.version }}"
           $exe = ".\dist\StackPilot\StackPilot.exe"
           $msi = ".\dist\msi\StackPilot-$version-x64.msi"
           foreach ($path in @($exe, $msi)) {
@@ -174,7 +174,7 @@ jobs:
       - name: Silent MSI install + uninstall smoke test
         shell: pwsh
         run: |
-          $version = "${{ steps.meta.outputs.product_version }}"
+          $version = "${{ steps.meta.outputs.version }}"
           $msi = Resolve-Path ".\dist\msi\StackPilot-$version-x64.msi"
           $logInstall = Join-Path $env:RUNNER_TEMP "stackpilot-msi-install.log"
           $logUninstall = Join-Path $env:RUNNER_TEMP "stackpilot-msi-uninstall.log"
