@@ -40,7 +40,7 @@ Replace in **all** of these when the Product ID exists:
 | Installer | `StackPilot-<version>-x64.msi` |
 | Architecture | x64 |
 | Install scope | Per-machine (`Program Files\OptimizeSolux\StackPilot`) |
-| Silent install | `msiexec /i StackPilot-<version>-x64.msi /qn /norestart` |
+| Silent install | `msiexec /i StackPilot-<version>-x64.msi /qn /norestart ALLUSERS=1` |
 | Silent uninstall | `msiexec /x StackPilot-<version>-x64.msi /qn /norestart` |
 | Upgrade | Major upgrade via stable UpgradeCode `6DA385A7-4697-43B9-AF87-481959D0AD86` |
 | Payload | Self-contained `StackPilot.exe` + `catalog.json` |
