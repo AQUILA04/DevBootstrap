@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
-     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <!--
-    StackPilot MSI package
-    Silent install:   msiexec /i StackPilot-VERSION-x64.msi /qn /norestart
+    StackPilot MSI package (no WixUI — Store requires silent install).
+    Silent install:   msiexec /i StackPilot-VERSION-x64.msi /qn /norestart ALLUSERS=1
     Silent uninstall: msiexec /x StackPilot-VERSION-x64.msi /qn /norestart
     Version/UpgradeCode come from Directory.Build.props via DefineConstants.
   -->
@@ -29,6 +28,8 @@
     <Property Id="ARPURLINFOABOUT" Value="https://stackpilot.optimizesolux.com" />
     <Property Id="ARPURLUPDATEINFO" Value="https://stackpilot.optimizesolux.com/privacy.html" />
     <Property Id="ARPCOMMENTS" Value="Requires administrator rights. Installs development tools via winget/WSL/DISM." />
+    <Property Id="ALLUSERS" Value="1" Secure="yes" />
+    <Property Id="MSIINSTALLPERUSER" Value="0" Secure="yes" />
 
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="CompanyFolder" Name="OptimizeSolux">
@@ -44,9 +45,6 @@
       <ComponentGroupRef Id="ProductComponents" />
       <ComponentRef Id="ApplicationShortcut" />
     </Feature>
-
-    <ui:WixUI Id="WixUI_Minimal" />
-    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
   </Package>
 
   <Fragment>

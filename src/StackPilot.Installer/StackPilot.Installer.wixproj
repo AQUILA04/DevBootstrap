@@ -2,6 +2,7 @@
   <!--
     Pinned WiX 5 MSI project for StackPilot.
     Builds a per-machine x64 MSI that installs the self-contained StackPilot.exe + catalog.json.
+    No WixUI: Microsoft Store MSI/EXE submissions require silent install.
   -->
   <PropertyGroup>
     <OutputType>Package</OutputType>
@@ -16,9 +17,5 @@
   <ItemGroup>
     <BindPath Include="$(StackPilotPublishDir)" BindName="PublishDir" />
     <BindPath Include="$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\assets\icons'))" BindName="Icons" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
   </ItemGroup>
 </Project>

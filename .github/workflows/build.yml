@@ -175,24 +175,38 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ steps.meta.outputs.version }}"
-          $msi = Resolve-Path ".\dist\msi\StackPilot-$version-x64.msi"
+          $msi = (Resolve-Path ".\dist\msi\StackPilot-$version-x64.msi").Path
           $logInstall = Join-Path $env:RUNNER_TEMP "stackpilot-msi-install.log"
           $logUninstall = Join-Path $env:RUNNER_TEMP "stackpilot-msi-uninstall.log"
-          Write-Host "Silent install $msi"
-          $p = Start-Process -FilePath "msiexec.exe" -ArgumentList @("/i", "$msi", "/qn", "/norestart", "/l*v", "$logInstall") -Wait -PassThru
+          $msiInfo = Get-Item $msi
+          Write-Host ("Silent install {0} ({1:N0} bytes)" -f $msi, $msiInfo.Length)
+          if ($msiInfo.Length -lt 1MB) {
+            throw "MSI looks too small to contain the self-contained EXE: $($msiInfo.Length) bytes"
+          }
+          $installArgs = "/i `"$msi`" /qn /norestart ALLUSERS=1 /l*v `"$logInstall`""
+          $p = Start-Process -FilePath "$env:SystemRoot\System32\msiexec.exe" -ArgumentList $installArgs -Wait -PassThru
+          Write-Host "msiexec install exit=$($p.ExitCode)"
           if ($p.ExitCode -notin @(0, 3010)) {
-            Get-Content $logInstall -Tail 80
+            if (Test-Path $logInstall) { Get-Content $logInstall -Tail 120 }
             throw "MSI install failed with code $($p.ExitCode)"
           }
           $exe = Join-Path ${env:ProgramFiles} "OptimizeSolux\StackPilot\StackPilot.exe"
           $catalog = Join-Path ${env:ProgramFiles} "OptimizeSolux\StackPilot\catalog.json"
-          if (-not (Test-Path $exe)) { throw "Installed EXE missing: $exe" }
+          if (-not (Test-Path $exe)) {
+            Write-Host "Install tree:"
+            Get-ChildItem (Join-Path ${env:ProgramFiles} "OptimizeSolux") -Recurse -ErrorAction SilentlyContinue |
+              Select-Object -ExpandProperty FullName
+            if (Test-Path $logInstall) { Get-Content $logInstall -Tail 120 }
+            throw "Installed EXE missing: $exe"
+          }
           if (-not (Test-Path $catalog)) { throw "Installed catalog.json missing: $catalog" }
           Write-Host "Install OK: $exe"
           Write-Host "Silent uninstall"
-          $u = Start-Process -FilePath "msiexec.exe" -ArgumentList @("/x", "$msi", "/qn", "/norestart", "/l*v", "$logUninstall") -Wait -PassThru
+          $uninstallArgs = "/x `"$msi`" /qn /norestart /l*v `"$logUninstall`""
+          $u = Start-Process -FilePath "$env:SystemRoot\System32\msiexec.exe" -ArgumentList $uninstallArgs -Wait -PassThru
+          Write-Host "msiexec uninstall exit=$($u.ExitCode)"
           if ($u.ExitCode -notin @(0, 3010)) {
-            Get-Content $logUninstall -Tail 80
+            if (Test-Path $logUninstall) { Get-Content $logUninstall -Tail 120 }
             throw "MSI uninstall failed with code $($u.ExitCode)"
           }
           if (Test-Path $exe) {
