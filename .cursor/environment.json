@@ -8,6 +8,9 @@
     }
   ],
   "ports": [
-    3000
+    {
+      "name": "landing-page",
+      "port": 3000
+    }
   ]
 }
