@@ -7,11 +7,10 @@
     <OutputType>Package</OutputType>
     <OutputName>StackPilot-$(ProductVersion)-x64</OutputName>
     <InstallerPlatform>x64</InstallerPlatform>
-    <Cultures>en-US</Cultures>
+    <Cultures>;</Cultures>
     <SuppressIces>ICE91</SuppressIces>
-    <!-- Default publish folder produced by build.ps1 -Phase PublishExe -->
     <StackPilotPublishDir Condition="'$(StackPilotPublishDir)' == ''">$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\dist\StackPilot'))</StackPilotPublishDir>
-    <DefineConstants>ProductVersion=$(ProductVersion);Company=$(Company);ProductName=$(ProductName);MsiUpgradeCode=$(MsiUpgradeCode);PackageProjectUrl=$(PackageProjectUrl);PrivacyPolicyUrl=$(PrivacyPolicyUrl)</DefineConstants>
+    <DefineConstants>ProductVersion=$(ProductVersion);MsiUpgradeCode=$(MsiUpgradeCode)</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

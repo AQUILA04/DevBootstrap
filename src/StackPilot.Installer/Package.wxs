@@ -3,47 +3,44 @@
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <!--
     StackPilot MSI package
-    - Per-machine under Program Files\OptimizeSolux\StackPilot
-    - Major upgrades via stable UpgradeCode
-    - Start Menu shortcut + ARP branding
     Silent install:   msiexec /i StackPilot-VERSION-x64.msi /qn /norestart
     Silent uninstall: msiexec /x StackPilot-VERSION-x64.msi /qn /norestart
+    Version/UpgradeCode come from Directory.Build.props via DefineConstants.
   -->
-  <Package Name="$(var.ProductName)"
-           Manufacturer="$(var.Company)"
+  <Package Name="StackPilot"
+           Manufacturer="OptimizeSolux"
            Version="$(var.ProductVersion)"
            UpgradeCode="$(var.MsiUpgradeCode)"
            Language="1033"
            Scope="perMachine"
            Compressed="yes">
 
-    <SummaryInformation Description="$(var.ProductName) — pack outils de developpement"
-                        Manufacturer="$(var.Company)" />
+    <SummaryInformation Description="StackPilot - pack outils de developpement"
+                        Manufacturer="OptimizeSolux" />
 
-    <MajorUpgrade DowngradeErrorMessage="A newer version of $(var.ProductName) is already installed."
-                  Schedule="afterInstallInitialize"
-                  AllowSameVersionUpgrades="no" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of StackPilot is already installed."
+                  Schedule="afterInstallInitialize" />
 
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
 
     <Icon Id="AppIcon" SourceFile="!(bindpath.Icons)StackPilot.ico" />
     <Property Id="ARPPRODUCTICON" Value="AppIcon" />
-    <Property Id="ARPHELPLINK" Value="$(var.PackageProjectUrl)" />
-    <Property Id="ARPURLINFOABOUT" Value="$(var.PackageProjectUrl)" />
-    <Property Id="ARPURLUPDATEINFO" Value="$(var.PrivacyPolicyUrl)" />
+    <Property Id="ARPHELPLINK" Value="https://stackpilot.optimizesolux.com" />
+    <Property Id="ARPURLINFOABOUT" Value="https://stackpilot.optimizesolux.com" />
+    <Property Id="ARPURLUPDATEINFO" Value="https://stackpilot.optimizesolux.com/privacy.html" />
     <Property Id="ARPCOMMENTS" Value="Requires administrator rights. Installs development tools via winget/WSL/DISM." />
 
     <StandardDirectory Id="ProgramFiles64Folder">
-      <Directory Id="CompanyFolder" Name="$(var.Company)">
-        <Directory Id="INSTALLFOLDER" Name="$(var.ProductName)" />
+      <Directory Id="CompanyFolder" Name="OptimizeSolux">
+        <Directory Id="INSTALLFOLDER" Name="StackPilot" />
       </Directory>
     </StandardDirectory>
 
     <StandardDirectory Id="ProgramMenuFolder">
-      <Directory Id="ApplicationProgramsFolder" Name="$(var.ProductName)" />
+      <Directory Id="ApplicationProgramsFolder" Name="StackPilot" />
     </StandardDirectory>
 
-    <Feature Id="ProductFeature" Title="$(var.ProductName)" Level="1" ConfigurableDirectory="INSTALLFOLDER">
+    <Feature Id="ProductFeature" Title="StackPilot" Level="1" ConfigurableDirectory="INSTALLFOLDER">
       <ComponentGroupRef Id="ProductComponents" />
       <ComponentRef Id="ApplicationShortcut" />
     </Feature>
@@ -71,14 +68,14 @@
   <Fragment>
     <Component Id="ApplicationShortcut" Directory="ApplicationProgramsFolder" Guid="F2C93333-3D15-40EE-B5B3-4EE9631403CB" Bitness="always64">
       <Shortcut Id="StartMenuShortcut"
-                Name="$(var.ProductName)"
-                Description="$(var.ProductName) — pack outils de developpement"
+                Name="StackPilot"
+                Description="StackPilot - pack outils de developpement"
                 Target="[INSTALLFOLDER]StackPilot.exe"
                 WorkingDirectory="INSTALLFOLDER"
                 Icon="AppIcon" />
       <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
       <RegistryValue Root="HKLM"
-                     Key="Software\$(var.Company)\$(var.ProductName)"
+                     Key="Software\OptimizeSolux\StackPilot"
                      Name="Installed"
                      Type="integer"
                      Value="1"

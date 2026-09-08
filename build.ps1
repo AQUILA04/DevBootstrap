@@ -185,18 +185,37 @@ function Invoke-BuildMsi {
     $wixproj = Join-Path $root "src\StackPilot.Installer\StackPilot.Installer.wixproj"
     $publishMsbuild = ConvertTo-MsbuildPath $script:ResolvedPublishDir
     $msiOutMsbuild = ConvertTo-MsbuildPath $script:ResolvedMsiOutDir
+    $binLog = Join-Path $script:ResolvedMsiOutDir "wix.binlog"
+    $textLog = Join-Path $script:ResolvedMsiOutDir "wix-build.log"
     Write-Step "WiX MSI ($($Meta.Version)) depuis EXE publie..."
     Write-Host "[build] PublishDir=$publishMsbuild"
     Write-Host "[build] OutputPath=$msiOutMsbuild"
-    & dotnet build $wixproj `
-        -c Release `
-        -v minimal `
-        "-p:StackPilotPublishDir=$publishMsbuild" `
-        "-p:ProductVersion=$($Meta.Version)" `
-        "-p:OutputPath=$msiOutMsbuild" `
+
+    $dotnetArgs = @(
+        "build", $wixproj,
+        "-c", "Release",
+        "-v", "n",
+        "-nologo",
+        "-bl:$binLog",
+        "-p:StackPilotPublishDir=$publishMsbuild",
+        "-p:ProductVersion=$($Meta.Version)",
+        "-p:MsiUpgradeCode=$($script:MsiUpgradeCode)",
+        "-p:OutputPath=$msiOutMsbuild",
         "-p:BaseOutputPath=$msiOutMsbuild"
-    if ($LASTEXITCODE -ne 0) {
-        throw "Build MSI WiX a echoue (code $LASTEXITCODE)."
+    )
+    # Capture stdout/stderr via cmd redirection so CI always surfaces WiX/MSBuild errors.
+    $cmdLine = "dotnet " + (($dotnetArgs | ForEach-Object {
+                if ($_ -match '[\s"]') { '"' + ($_ -replace '"', '\"') + '"' } else { $_ }
+            }) -join ' ')
+    Write-Host "[build] $cmdLine"
+    cmd.exe /c "$cmdLine > `"$textLog`" 2>&1"
+    $buildExit = $LASTEXITCODE
+    if (Test-Path -LiteralPath $textLog) {
+        Get-Content -LiteralPath $textLog | ForEach-Object { Write-Host $_ }
+    }
+    if ($buildExit -ne 0) {
+        Write-Host "[build] --- WiX/MSBuild failed (exit $buildExit) ---" -ForegroundColor Red
+        throw "Build MSI WiX a echoue (code $buildExit)."
     }
 
     $msiName = "$OutputName-$($Meta.Version)-x64.msi"
