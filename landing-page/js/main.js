@@ -1,4 +1,20 @@
 (() => {
+  // Centralized Store CTA — PLACEHOLDER until Partner Center Product ID exists.
+  // Replace microsoftStoreUrl with https://apps.microsoft.com/detail/<PRODUCT_ID>
+  // and set microsoftStoreUrlIsPlaceholder to false when the listing is live.
+  const storeLinks = {
+    microsoftStoreUrl: "https://apps.microsoft.com/search?query=StackPilot%20OptimizeSolux",
+    microsoftStoreUrlIsPlaceholder: true,
+    githubMsiUrl: "https://github.com/AQUILA04/DevBootstrap/releases/latest/download/StackPilot-1.2.4-x64.msi"
+  };
+
+  document.querySelectorAll("[data-store-cta]").forEach((el) => {
+    el.setAttribute("href", storeLinks.microsoftStoreUrl);
+    if (storeLinks.microsoftStoreUrlIsPlaceholder) {
+      el.setAttribute("title", "Lien Store placeholder — fiche pas encore publiée");
+    }
+  });
+
   const glow = document.querySelector(".cursor-glow");
   if (glow && window.matchMedia("(pointer: fine)").matches) {
     let visible = false;

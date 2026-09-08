@@ -11,10 +11,19 @@ on:
 permissions:
   contents: read
 
+env:
+  DOTNET_VERSION: "8.0.x"
+
 jobs:
   build:
-    name: Build EXE
+    name: Build EXE + MSI
     runs-on: windows-latest
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      product_version: ${{ steps.meta.outputs.version }}
+      is_release: ${{ steps.meta.outputs.is_release }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,16 +31,165 @@ jobs:
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Build StackPilot
+      - name: Read product metadata
+        id: meta
+        shell: pwsh
+        run: |
+          . .\branding.ps1
+          [xml]$props = Get-Content .\Directory.Build.props -Raw
+          $version = [string]$props.Project.PropertyGroup.ProductVersion
+          if ($version -ne $ProductVersion) {
+            throw "Version drift: props=$version branding=$ProductVersion"
+          }
+          $vj = Get-Content .\version.json -Raw | ConvertFrom-Json
+          if ($vj.version -ne $version) {
+            throw "Version drift: version.json=$($vj.version) props=$version"
+          }
+          $isRelease = $false
+          if ($env:GITHUB_REF_TYPE -eq "tag") {
+            $expected = "v$version"
+            if ($env:GITHUB_REF_NAME -ne $expected) {
+              throw "Release tag '$($env:GITHUB_REF_NAME)' must exactly match product version tag '$expected'."
+            }
+            $isRelease = $true
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "is_release=$isRelease" >> $env:GITHUB_OUTPUT
+          "tag=v$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Product version $version (release=$isRelease)"
+
+      - name: Validate packaging metadata
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy -Scope Process Bypass
+          .\scripts\validate-packaging.ps1
+
+      - name: Publish unsigned EXE
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy -Scope Process Bypass
+          .\build.ps1 -Phase PublishExe -SkipZip -SkipMsi -SkipSign
+
+      - name: Azure login (release signing, OIDC)
+        if: steps.meta.outputs.is_release == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Sign EXE (Azure Artifact Signing)
+        if: steps.meta.outputs.is_release == 'true'
+        uses: azure/trusted-signing-action@v2
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE }}
+          files: ${{ github.workspace }}\dist\StackPilot\StackPilot.exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Optional local PFX sign EXE (non-release / compatible fallback)
+        if: steps.meta.outputs.is_release != 'true'
         shell: pwsh
         env:
           CODE_SIGN_PFX_BASE64: ${{ secrets.CODE_SIGN_PFX_BASE64 }}
           CODE_SIGN_PASSWORD: ${{ secrets.CODE_SIGN_PASSWORD }}
         run: |
           Set-ExecutionPolicy -Scope Process Bypass
-          .\build.ps1
+          .\build.ps1 -Phase SignExe -SkipZip -SkipMsi
+
+      - name: Build MSI (packages published EXE)
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy -Scope Process Bypass
+          .\build.ps1 -Phase BuildMsi -SkipZip -SkipSign
+
+      - name: Sign MSI (Azure Artifact Signing)
+        if: steps.meta.outputs.is_release == 'true'
+        uses: azure/trusted-signing-action@v2
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_TRUSTED_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.AZURE_TRUSTED_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_TRUSTED_SIGNING_CERTIFICATE_PROFILE }}
+          files-folder: ${{ github.workspace }}\dist\msi
+          files-folder-filter: msi
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Optional local PFX sign MSI (non-release)
+        if: steps.meta.outputs.is_release != 'true'
+        shell: pwsh
+        env:
+          CODE_SIGN_PFX_BASE64: ${{ secrets.CODE_SIGN_PFX_BASE64 }}
+          CODE_SIGN_PASSWORD: ${{ secrets.CODE_SIGN_PASSWORD }}
+        run: |
+          Set-ExecutionPolicy -Scope Process Bypass
+          .\build.ps1 -Phase SignMsi -SkipZip
+
+      - name: Package versioned ZIP + SHA256SUMS
+        shell: pwsh
+        run: |
+          Set-ExecutionPolicy -Scope Process Bypass
+          .\build.ps1 -Phase Package
+
+      - name: Verify Authenticode (release)
+        if: steps.meta.outputs.is_release == 'true'
+        shell: pwsh
+        run: |
+          $version = "${{ steps.meta.outputs.product_version }}"
+          $exe = ".\dist\StackPilot\StackPilot.exe"
+          $msi = ".\dist\msi\StackPilot-$version-x64.msi"
+          foreach ($path in @($exe, $msi)) {
+            $sig = Get-AuthenticodeSignature -FilePath $path
+            Write-Host ("{0}: Status={1} Publisher={2}" -f $path, $sig.Status, $sig.SignerCertificate.Subject)
+            if ($sig.Status -ne "Valid") {
+              throw "Authenticode invalid for $path : $($sig.Status) $($sig.StatusMessage)"
+            }
+            if (-not $sig.SignerCertificate) {
+              throw "Missing signer certificate for $path"
+            }
+            Write-Host "Publisher OK: $($sig.SignerCertificate.Subject)"
+          }
+
+      - name: Silent MSI install + uninstall smoke test
+        shell: pwsh
+        run: |
+          $version = "${{ steps.meta.outputs.product_version }}"
+          $msi = Resolve-Path ".\dist\msi\StackPilot-$version-x64.msi"
+          $logInstall = Join-Path $env:RUNNER_TEMP "stackpilot-msi-install.log"
+          $logUninstall = Join-Path $env:RUNNER_TEMP "stackpilot-msi-uninstall.log"
+          Write-Host "Silent install $msi"
+          $p = Start-Process -FilePath "msiexec.exe" -ArgumentList @("/i", "$msi", "/qn", "/norestart", "/l*v", "$logInstall") -Wait -PassThru
+          if ($p.ExitCode -notin @(0, 3010)) {
+            Get-Content $logInstall -Tail 80
+            throw "MSI install failed with code $($p.ExitCode)"
+          }
+          $exe = Join-Path ${env:ProgramFiles} "OptimizeSolux\StackPilot\StackPilot.exe"
+          $catalog = Join-Path ${env:ProgramFiles} "OptimizeSolux\StackPilot\catalog.json"
+          if (-not (Test-Path $exe)) { throw "Installed EXE missing: $exe" }
+          if (-not (Test-Path $catalog)) { throw "Installed catalog.json missing: $catalog" }
+          Write-Host "Install OK: $exe"
+          Write-Host "Silent uninstall"
+          $u = Start-Process -FilePath "msiexec.exe" -ArgumentList @("/x", "$msi", "/qn", "/norestart", "/l*v", "$logUninstall") -Wait -PassThru
+          if ($u.ExitCode -notin @(0, 3010)) {
+            Get-Content $logUninstall -Tail 80
+            throw "MSI uninstall failed with code $($u.ExitCode)"
+          }
+          if (Test-Path $exe) {
+            throw "EXE still present after uninstall: $exe"
+          }
+          Write-Host "Uninstall OK"
 
       - name: Upload StackPilot folder
         uses: actions/upload-artifact@v4
@@ -40,31 +198,38 @@ jobs:
           path: dist/StackPilot/
           if-no-files-found: error
 
-      - name: Upload StackPilot zip
+      - name: Upload MSI + ZIP + checksums
         uses: actions/upload-artifact@v4
         with:
-          name: StackPilot-zip
-          path: dist/StackPilot.zip
+          name: StackPilot-installer
+          path: |
+            dist/msi/*.msi
+            dist/StackPilot-*-x64.zip
+            dist/StackPilot-*-SHA256SUMS.txt
           if-no-files-found: error
 
   release:
-    name: Publish release
+    name: Publish GitHub Release
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Download zip artifact
+      - name: Download installer artifacts
         uses: actions/download-artifact@v4
         with:
-          name: StackPilot-zip
+          name: StackPilot-installer
           path: release-assets
 
-      - name: Create GitHub Release
+      - name: Create immutable versioned GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: release-assets/StackPilot.zip
+          files: |
+            release-assets/**/*.msi
+            release-assets/**/*.zip
+            release-assets/**/*SHA256SUMS.txt
           generate_release_notes: true
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

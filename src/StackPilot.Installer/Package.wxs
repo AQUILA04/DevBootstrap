@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <!--
+    StackPilot MSI package
+    - Per-machine under Program Files\OptimizeSolux\StackPilot
+    - Major upgrades via stable UpgradeCode
+    - Start Menu shortcut + ARP branding
+    Silent install:   msiexec /i StackPilot-VERSION-x64.msi /qn /norestart
+    Silent uninstall: msiexec /x StackPilot-VERSION-x64.msi /qn /norestart
+  -->
+  <Package Name="$(var.ProductName)"
+           Manufacturer="$(var.Company)"
+           Version="$(var.ProductVersion)"
+           UpgradeCode="$(var.MsiUpgradeCode)"
+           Language="1033"
+           Scope="perMachine"
+           Compressed="yes">
+
+    <SummaryInformation Description="$(var.ProductName) — pack outils de developpement"
+                        Manufacturer="$(var.Company)" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of $(var.ProductName) is already installed."
+                  Schedule="afterInstallInitialize"
+                  AllowSameVersionUpgrades="no" />
+
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="AppIcon" SourceFile="!(bindpath.Icons)StackPilot.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+    <Property Id="ARPHELPLINK" Value="$(var.PackageProjectUrl)" />
+    <Property Id="ARPURLINFOABOUT" Value="$(var.PackageProjectUrl)" />
+    <Property Id="ARPURLUPDATEINFO" Value="$(var.PrivacyPolicyUrl)" />
+    <Property Id="ARPCOMMENTS" Value="Requires administrator rights. Installs development tools via winget/WSL/DISM." />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="CompanyFolder" Name="$(var.Company)">
+        <Directory Id="INSTALLFOLDER" Name="$(var.ProductName)" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="$(var.ProductName)" />
+    </StandardDirectory>
+
+    <Feature Id="ProductFeature" Title="$(var.ProductName)" Level="1" ConfigurableDirectory="INSTALLFOLDER">
+      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentRef Id="ApplicationShortcut" />
+    </Feature>
+
+    <ui:WixUI Id="WixUI_Minimal" />
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+  </Package>
+
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <Component Id="StackPilotExe" Guid="0815824A-286E-4C4E-9D8E-C963F6C19FA3" Bitness="always64">
+        <File Id="StackPilotExe"
+              Source="!(bindpath.PublishDir)StackPilot.exe"
+              KeyPath="yes"
+              Checksum="yes" />
+      </Component>
+      <Component Id="CatalogJson" Guid="DD480BA2-1BF0-48A2-B89A-1C55874D3AD7" Bitness="always64">
+        <File Id="CatalogJson"
+              Source="!(bindpath.PublishDir)catalog.json"
+              KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <Component Id="ApplicationShortcut" Directory="ApplicationProgramsFolder" Guid="F2C93333-3D15-40EE-B5B3-4EE9631403CB" Bitness="always64">
+      <Shortcut Id="StartMenuShortcut"
+                Name="$(var.ProductName)"
+                Description="$(var.ProductName) — pack outils de developpement"
+                Target="[INSTALLFOLDER]StackPilot.exe"
+                WorkingDirectory="INSTALLFOLDER"
+                Icon="AppIcon" />
+      <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
+      <RegistryValue Root="HKLM"
+                     Key="Software\$(var.Company)\$(var.ProductName)"
+                     Name="Installed"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+    </Component>
+  </Fragment>
+</Wix>

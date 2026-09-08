@@ -1,0 +1,12 @@
+{
+  "productName": "StackPilot",
+  "version": "1.2.4",
+  "company": "OptimizeSolux",
+  "msiUpgradeCode": "6DA385A7-4697-43B9-AF87-481959D0AD86",
+  "microsoftStoreUrl": "https://apps.microsoft.com/search?query=StackPilot%20OptimizeSolux",
+  "microsoftStoreUrlIsPlaceholder": true,
+  "privacyPolicyUrl": "https://stackpilot.optimizesolux.com/privacy.html",
+  "repositoryUrl": "https://github.com/AQUILA04/DevBootstrap",
+  "packageProjectUrl": "https://stackpilot.optimizesolux.com",
+  "notes": "Single logical version for EXE/MSI/Git tags (v1.2.4). Update Directory.Build.props, branding.ps1, and this file together."
+}

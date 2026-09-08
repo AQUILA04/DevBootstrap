@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <!-- StackPilot application / Store icon  source of truth; regenerate ICO/PNG via assets/icons/generate-icons.py -->
+  <rect width="256" height="256" rx="48" fill="#0B1F24"/>
+  <path d="M64 160V96l64-32 64 32v64l-64 32-64-32Z" stroke="#0F8F7B" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M96 144l24 24 48-56" stroke="#D97706" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
