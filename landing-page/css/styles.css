@@ -445,6 +445,12 @@ h2 {
 .hint {
   margin-top: 1.75rem !important;
   font-size: 0.95rem !important;
+  color: var(--muted);
+}
+
+.hero .store-note {
+  margin-top: 1rem;
+  max-width: 36rem;
 }
 
 .section-contrib {

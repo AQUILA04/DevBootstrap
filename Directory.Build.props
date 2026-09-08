@@ -1,0 +1,39 @@
+<Project>
+  <!--
+    Single source of truth for product/version metadata.
+    Keep EXE, MSI, release tags (vX.Y.Z), and docs synchronized with these values.
+  -->
+  <PropertyGroup>
+    <ProductName>StackPilot</ProductName>
+    <ProductVersion>1.2.4</ProductVersion>
+    <AssemblyVersion>$(ProductVersion).0</AssemblyVersion>
+    <FileVersion>$(ProductVersion).0</FileVersion>
+    <InformationalVersion>$(ProductVersion)</InformationalVersion>
+    <Version>$(ProductVersion)</Version>
+    <Company>OptimizeSolux</Company>
+    <Authors>OptimizeSolux</Authors>
+    <Product>$(ProductName)</Product>
+    <Copyright>Copyright (c) OptimizeSolux</Copyright>
+    <Description>Installateur du pack outils de developpement</Description>
+    <PackageProjectUrl>https://stackpilot.optimizesolux.com</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/AQUILA04/DevBootstrap</RepositoryUrl>
+    <NeutralLanguage>fr-FR</NeutralLanguage>
+
+    <!--
+      Microsoft Store listing URL.
+      PLACEHOLDER until Partner Center assigns a Product ID.
+      Replace MicrosoftStoreUrl with https://apps.microsoft.com/detail/<PRODUCT_ID>
+      and set MicrosoftStoreUrlIsPlaceholder to false in branding.ps1 / docs.
+    -->
+    <MicrosoftStoreUrl>https://apps.microsoft.com/search?query=StackPilot%20OptimizeSolux</MicrosoftStoreUrl>
+    <MicrosoftStoreUrlIsPlaceholder>true</MicrosoftStoreUrlIsPlaceholder>
+    <PrivacyPolicyUrl>https://stackpilot.optimizesolux.com/privacy.html</PrivacyPolicyUrl>
+    <SupportUrl>mailto:contact.stackpilot@optimizesolux.com</SupportUrl>
+
+    <!-- Stable WiX UpgradeCode — do not change across releases -->
+    <MsiUpgradeCode>6DA385A7-4697-43B9-AF87-481959D0AD86</MsiUpgradeCode>
+
+    <!-- Allow cross-compiling win-x64 from Linux CI/agents -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+</Project>

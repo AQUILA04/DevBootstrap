@@ -3,19 +3,36 @@
 Application Windows pour installer rapidement ton pack d'outils de developpement sur un nouveau poste.
 Double-clic, UAC, checklist — sans dependre de l'execution des scripts PowerShell.
 
+**Canal principal (prevu) : Microsoft Store.**  
+**Secours : MSI signe GitHub Releases.** La fiche Store n'est pas encore publiee ; le lien ci-dessous est un **placeholder** (recherche) jusqu'a attribution du Product ID Partner Center.
+
 ## Prerequisites
 
 - Windows 10/11 avec [winget](https://learn.microsoft.com/windows/package-manager/winget/) (`App Installer`)
 - Connexion Internet
 - Compte administrateur (UAC) pour WSL, Docker Desktop, etc.
 
-## Utilisation (recommandee)
+## Installation
 
-1. Telecharge le dernier ZIP :  
-   https://github.com/AQUILA04/DevBootstrap/releases/latest/download/StackPilot.zip
-2. Extraits le dossier (garde `StackPilot.exe` et `catalog.json` ensemble)
-3. Double-clic sur `StackPilot.exe` (UAC Windows)
-4. Choisis un **profil** (Base, Frontend, Backend, Fullstack, DevOps, Mobile, UX/UI Web Designer), ajuste la checklist, puis **Installer**
+### 1. Microsoft Store (recommandee)
+
+Placeholder (pas encore de Product ID) :
+
+https://apps.microsoft.com/search?query=StackPilot%20OptimizeSolux
+
+Quand la fiche sera live, ce lien sera remplace par `https://apps.microsoft.com/detail/<PRODUCT_ID>` dans `Directory.Build.props` / `branding.ps1` / `version.json` (voir [docs/microsoft-store.md](docs/microsoft-store.md)).
+
+### 2. MSI signe GitHub (secours)
+
+1. Telecharge le MSI versionne :  
+   https://github.com/AQUILA04/DevBootstrap/releases/latest/download/StackPilot-1.2.4-x64.msi  
+   (ou la version courante publiee sur la release `vX.Y.Z`)
+2. Installe (UI) ou en silencieux :  
+   `msiexec /i StackPilot-1.2.4-x64.msi /qn /norestart`
+3. Lance **StackPilot** depuis le menu Demarrer (UAC Windows)
+4. Choisis un **profil**, ajuste la checklist, puis **Installer**
+
+ZIP de secours (meme build) : `StackPilot-1.2.4-x64.zip` + `StackPilot-1.2.4-SHA256SUMS.txt`.
 
 ## Profils (catalogue v2)
 
@@ -37,7 +54,7 @@ Le profil **Mobile** installe Flutter via telechargement officiel (pas winget) :
 
 ## Build (developpeurs)
 
-Necessite [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+Necessite [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) et, pour le MSI, [WiX Toolset 5](https://wixtoolset.org/) (via le SDK NuGet `WixToolset.Sdk/5.0.2`, build sur Windows).
 
 ```bat
 build.cmd
@@ -47,16 +64,27 @@ ou :
 
 ```powershell
 .\build.ps1
+.\build.ps1 -Phase PublishExe
+.\build.ps1 -Phase BuildMsi
+.\scripts\validate-packaging.ps1
 ```
 
-Resultat :
+Metadonnees centralisees : `Directory.Build.props`, `branding.ps1`, `version.json` (garder les trois synchronises).
 
-- `dist\StackPilot\StackPilot.exe` (appli WinForms native, self-contained)
-- `dist\StackPilot\catalog.json`
-- `dist\StackPilot\LIRE-MOI.txt`
-- `dist\StackPilot.zip`
+Resultat typique :
 
-Signature Authenticode optionnelle en CI si secrets `CODE_SIGN_PFX_BASE64` + `CODE_SIGN_PASSWORD`.
+- `dist\StackPilot\StackPilot.exe` (+ `catalog.json`)
+- `dist\msi\StackPilot-1.2.4-x64.msi`
+- `dist\StackPilot-1.2.4-x64.zip`
+- `dist\StackPilot-1.2.4-SHA256SUMS.txt`
+
+Signature :
+
+- **Release tags** : Azure Artifact Signing (`azure/trusted-signing-action`) signe l'EXE puis le MSI
+- **Optionnel local** : secrets `CODE_SIGN_PFX_BASE64` + `CODE_SIGN_PASSWORD` (compatible `build.ps1`)
+
+Publication Store : [docs/microsoft-store.md](docs/microsoft-store.md)  
+Confidentialite : [https://stackpilot.optimizesolux.com/privacy.html](https://stackpilot.optimizesolux.com/privacy.html)
 
 ## CLI optionnelle (machines non verrouillees)
 
@@ -74,11 +102,18 @@ Les scripts `bootstrap.ps1` / `gui.ps1` restent disponibles pour le developpemen
 
 Repo: `https://github.com/AQUILA04/DevBootstrap`
 
-Sur push / PR / tag `v*` :
+Sur push / PR :
 
-1. Build natif .NET 8 sur `windows-latest`
-2. Artefacts `StackPilot` + `StackPilot-zip`
-3. Tag `v*` → GitHub Release avec le zip
+1. Build .NET 8 + MSI WiX sur `windows-latest` (non signe sauf PFX optionnel)
+2. Smoke test install / uninstall MSI silencieux
+3. Artefacts EXE + MSI + ZIP + SHA256
+
+Sur tag `v*` **exactement egal** a `v` + `ProductVersion` (ex. `v1.2.4`) :
+
+1. Azure Artifact Signing de l'EXE
+2. Packaging MSI contenant l'EXE signe
+3. Signature Authenticode du MSI + verification editeur
+4. Release GitHub immuable avec MSI / ZIP / SHA256SUMS
 
 ```bat
 git tag v1.2.4

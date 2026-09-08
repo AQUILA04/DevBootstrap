@@ -68,6 +68,18 @@ Rules:
 - Tag packages with role tags when useful (`frontend`, `backend`, `devops`, `mobile`, `ux`, …)
 - Flutter uses `"installer": "flutter"` (custom download) because the SDK is not reliably published on winget.
 
+## Version / Store packaging
+
+When bumping the product version, update **all** of:
+
+- `Directory.Build.props` (`ProductVersion`)
+- `branding.ps1`
+- `version.json`
+- `src/StackPilot/app.manifest` assemblyIdentity version (`X.Y.Z.0`)
+
+Then run `.\scripts\validate-packaging.ps1` (or `python3 scripts/validate-packaging.py`).
+Store submission notes live in [docs/microsoft-store.md](docs/microsoft-store.md).
+
 ## Local check
 
 ```powershell
@@ -75,9 +87,11 @@ Rules:
 .\bootstrap.ps1 -WhatIf -Profile frontend
 .\bootstrap.ps1 -WhatIf -Profile mobile
 .\bootstrap.ps1 -WhatIf -Keys my-tool
+.\scripts\validate-packaging.ps1
 ```
 
 ## Landing / product
 
 - Product: **StackPilot**
 - Site: https://stackpilot.optimizesolux.com
+- Privacy: https://stackpilot.optimizesolux.com/privacy.html

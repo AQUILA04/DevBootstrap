@@ -6,17 +6,17 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon />
+    <ApplicationIcon>..\..\assets\icons\StackPilot.ico</ApplicationIcon>
     <RootNamespace>StackPilot</RootNamespace>
     <AssemblyName>StackPilot</AssemblyName>
-    <Version>1.2.4</Version>
-    <Product>StackPilot</Product>
-    <Company>OptimizeSolux</Company>
-    <Description>Installateur du pack outils de developpement</Description>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <DebugType>embedded</DebugType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\assets\icons\StackPilot.ico" Link="StackPilot.ico" />
+  </ItemGroup>
 </Project>
